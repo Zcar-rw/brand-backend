@@ -1,0 +1,27 @@
+name: Reach Staging backend | Fly Development Deploy
+
+on:
+  push:
+    branches:
+      - develop
+  workflow_dispatch:
+
+env:
+  FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+  MAILJET_API_KEY: ${{ secrets.MAILJET_API_KEY }}
+  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+  DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+  STAGING_REACH_ORG_BE_APP_NAME: ${{ secrets.STAGING_REACH_ORG_BE_APP_NAME }}
+
+jobs:
+  deploy:
+    name: Deploy app | Reach Staging backend
+    runs-on: ubuntu-latest
+
+    steps:
+      # check out repository and flyctl deploy
+      - uses: actions/checkout@v2
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - run: flyctl deploy --app ${STAGING_REACH_ORG_BE_APP_NAME} --build-target production
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}

@@ -1,0 +1,7 @@
+version: '3'
+
+services:
+  backend-locar:
+    build: 
+      context: . #build the image from the Dockerfile in root dir
+    image: locar-be-dev # resulting image is named as 'locar-be'
