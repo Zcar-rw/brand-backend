@@ -1,17 +1,9 @@
 import Joi from 'joi';
 
-// "model": "4x4",
-// "plateNumber": "RAG 408 K",
-// "year": "2023",
-// "typeId": "",
-// "carMakeId": "",
-// "amount": 10,
-// "baseAmount": 10,
-// "photo": ""
-
 const schema = {
   onCarCreate: Joi.object({
     model: Joi.string().required(),
+    supplierId: Joi.string().required(),
     amount: Joi.number().required(),
     baseAmount: Joi.number().required(),
     photo: Joi.string().optional(),
@@ -30,7 +22,17 @@ const schema = {
 
 const carValidations = {
   carCreation(req, res, next) {
-    const { error } = schema.onCarCreate.validate(req.body);
+    const { error } = schema.onCarCreate.validate({
+      model: req.body.model,
+      supplierId: req.body.supplierId,
+      amount: req.body.amount,
+      baseAmount: req.body.baseAmount,
+      photo: req.body.photo,
+      typeId: req.body.typeId,
+      carMakeId: req.body.carMakeId,
+      plateNumber: req.body.plateNumber,
+      year: req.body.year,
+    });
     if (error) {
       return res.status(400).json({
         error: error.details[0].message.replace(/["'`]+/g, ''),

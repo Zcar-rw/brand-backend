@@ -11,7 +11,12 @@ const schema = {
 
 const carValidations = {
   supplierCreation(req, res, next) {
-    const { error } = schema.onSupplierCreate.validate(req.body);
+    const { error } = schema.onSupplierCreate.validate({
+      name: req.body.name,
+      email: req.body.email,
+      address: req.body.address,
+      tin: req.body.tin,
+    });
     if (error) {
       return res.status(400).json({
         error: error.details[0].message.replace(/["'`]+/g, ''),

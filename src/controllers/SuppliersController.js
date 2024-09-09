@@ -1,18 +1,24 @@
 /* eslint-disable require-jsdoc */
 import 'dotenv/config';
+import _ from 'lodash';
 import db from '../database/models';
-import { Op } from 'sequelize';
 import * as helper from '../helpers';
 import status from '../config/status';
-import { FindAndCount, Create } from '../database/queries';
+import { FindAndCount, Create, findAll, FindOne } from '../database/queries';
+import generateErrorResponse from '../helpers/generateErrorResponse';
 
-export default class CarsController {
+export default class SuppliersController {
   static async createSupplier(req, res) {
+    const { name, email, address, tin, userId } = req.body;
     const data = {
-      ...req.body,
+      name,
+      email,
+      address,
+      tin,
       status: 'active',
-      createdBy: '6ba5829c-20e7-48bf-8aea-1b4ac64aae21',
+      createdBy: userId,
     };
+    console.log('@@@data', data);
     try {
       // data.ownerId = req.user.user.id;
       const response = await Create('Supplier', data);
@@ -24,40 +30,37 @@ export default class CarsController {
             response,
           });
     } catch (error) {
-      return res.status(status.INTERNAL_SERVER_ERROR).send({
-        error: 'Something went wrong, try again later',
+
+      generateErrorResponse(error, res);
+      return res.status(status.BAD_REQUEST).send({
+        error: generateErrorResponse(error, res),
       });
+      // return res.status(status.INTERNAL_SERVER_ERROR).send({
+      //   error: 'Something went wrong, try again later',
+      // });
     }
   }
 
   static async fetchSuppliers(req, res) {
-    let { page, limit } = req.query;
+    const { page, limit } = req.query;
     if (!page) {
       return res.status(status.BAD_REQUEST).send({
         response: [],
         error: 'Sorry, pagination parameters are required[page, limit]',
       });
     }
-    limit = limit || 9;
-    const offset = page === 1 ? 0 : (parseInt(page, 10) - 1) * limit;
+    const count = limit || 9;
+    const offset = page === 1 ? 0 : (parseInt(page, 10) - 1) * count;
 
     try {
-      const condition = {
-        // status: 'active',
-      };
-      const include = [
-        {
-          model: db.Profile,
-          as: 'supplier',
-          attributes: { exclude: ['firstName', 'lastName'] },
-        },
-      ];
+      const condition = {};
+      const include = [];
       const { response, meta } = await FindAndCount(
         'Supplier',
         condition,
         include,
         limit,
-        offset
+        offset,
       );
       if (response && !response.length) {
         return res.status(status.NO_CONTENT).send({
@@ -70,7 +73,51 @@ export default class CarsController {
         response,
       });
     } catch (error) {
-      console.log('error', error);
+      return res.status(status.BAD_REQUEST).send({
+        error: 'Suppliers not found at this moment, try again later',
+      });
+    }
+  }
+
+  static async fetchSupplierDetails(req, res) {
+    const { id } = req.params;
+
+    try {
+      const condition = {
+        id,
+      };
+      const include = [];
+
+      const supplier = await FindOne('Supplier', condition, include);
+      if (_.isEmpty(supplier)) {
+        return res.status(status.NO_CONTENT).send({
+          response: [],
+          error: 'Sorry, No suppliers found!',
+        });
+      }
+      const { response, meta } = await FindAndCount(
+        'Car',
+        {
+          supplierId: id,
+        },
+        [
+          {
+            model: db.CarType,
+            as: 'carType',
+            attributes: { exclude: ['createdAt', 'updatedAt'] },
+          },
+          {
+            model: db.CarMake,
+            as: 'carMake',
+            attributes: { exclude: ['createdAt', 'updatedAt'] },
+          },
+        ],
+      );
+      return res.status(status.OK).json({
+        cars: _.isEmpty(response) ? [] : response,
+        supplier,
+      });
+    } catch (error) {
       return res.status(status.BAD_REQUEST).send({
         error: 'Suppliers not found at this moment, try again later',
       });

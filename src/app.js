@@ -6,9 +6,8 @@ import dotenv from 'dotenv'
 import cors from 'cors'
 import session from 'express-session'
 import routes from './routes'
-import swaggerUI from 'swagger-ui-express'
-import swaggerDocs from './documention'
 import { sequelize } from './database/models'
+import path from 'path'
 
 const app = express()
 const server = http.createServer(app)
@@ -26,7 +25,8 @@ app.use(
   })
 )
 
-// swagger route
+// make file accessible from public folder
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.use(logger('dev'))
 
@@ -60,11 +60,6 @@ if (mode === 'production') {
 }
 
 app.use('/', routes)
-
-// api documentation
-if (mode === 'development' || mode === 'staging') {
-  app.use('/docs', swaggerUI.serve, swaggerUI.setup(swaggerDocs))
-}
 
 // catch 404 and forward to error handler
 app.use((req, res, next) => {

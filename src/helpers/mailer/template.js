@@ -21,7 +21,7 @@ export default (message) => {
       </div>
       <br>
       <div>Best regards,<br></div>
-      <b>Reach Team</b>
+      <b>Kale Team</b>
       </div>
       <!-- end body   -->
       </div>
@@ -29,8 +29,8 @@ export default (message) => {
       <div style="padding:35px 0px;text-align:left;">
         <div style="max-width:720px;margin: 0 auto;">
           <div style="padding: 0 20px">
-            Copyright, 2023<br>
-            Reach Labs Ltd, All right reserved.
+            Copyright, 2024<br>
+            Kale , All right reserved.
           </div>
         </div>
       </div>

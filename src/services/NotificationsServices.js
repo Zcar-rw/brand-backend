@@ -26,8 +26,6 @@ export default class NotificationsServices {
         receiverId,
         message,
         type,
-        rideId,
-        accountType,
       })
       return
     } catch (error) {

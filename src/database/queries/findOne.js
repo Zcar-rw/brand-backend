@@ -1,4 +1,4 @@
-import db from '../models';
+import db from './../models';
 const Sequelize = require('sequelize');
 /**
  * @param {object} modal
@@ -12,7 +12,7 @@ export default async (Model, condition = {}, include = []) => {
         where: condition,
         include,
       },
-      { logging: false }
+      { logging: false },
     );
     return response || {};
   } catch (error) {

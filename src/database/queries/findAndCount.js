@@ -6,7 +6,7 @@ export default async (
   include = null,
   limit,
   offset,
-  order,
+  order
 ) => {
   order = order || [['createdAt', 'DESC']];
   try {

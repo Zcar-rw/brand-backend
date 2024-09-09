@@ -9,9 +9,8 @@ const router = express.Router()
 
 router.post('/signup', asyncHandler(AuthLocalController.signup))
 router.post(
-  '/register/email',
-  isInactiveEmail,
-  asyncHandler(AuthLocalController.registerEmail)
+  '/register/internal-user',
+  asyncHandler(AuthLocalController.registerInternalUser)
 )
 router.post(
   '/register/verify-otp',

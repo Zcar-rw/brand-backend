@@ -2,7 +2,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-export default (sequelize, DataTypes) => {
+const User = (sequelize, DataTypes) => {
   const User = sequelize.define(
     'User',
     {
@@ -20,6 +20,22 @@ export default (sequelize, DataTypes) => {
           msg: 'Email address is already in use!',
         },
       },
+      firstName: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      lastName: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      phoneNumber: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      photo: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
       password: {
         type: DataTypes.STRING,
         allowNull: false,
@@ -29,10 +45,21 @@ export default (sequelize, DataTypes) => {
         allowNull: false,
         defaultValue: 'inactive',
       },
-      role: {
-        type: DataTypes.ENUM('admin', 'super', 'normal'),
+      roleId: {
+        type: DataTypes.UUID,
         allowNull: false,
-        defaultValue: 'normal',
+        references: {
+          model: 'Roles',
+          key: 'id',
+        },
+      },
+      companyId: {
+        type: DataTypes.UUID,
+        allowNull: true,
+        references: {
+          model: 'Companies',
+          key: 'id',
+        },
       },
       verified: {
         type: DataTypes.BOOLEAN,
@@ -48,66 +75,20 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.DATE,
       },
     },
-    {}
+    {},
   );
+
   User.associate = (models) => {
-    User.hasOne(models.Profile, {
-      foreignKey: 'userId',
-      onUpdate: 'CASCADE',
-      onDelete: 'CASCADE',
-      as: 'user'
+    User.belongsTo(models.Role, {
+      foreignKey: 'roleId',
+      as: 'role',
     });
-    User.hasMany(models.Car, {
-      foreignKey: 'userId',
-      onUpdate: 'CASCADE',
-      onDelete: 'CASCADE',
-    });
-    User.hasMany(models.Ride, {
-      foreignKey: 'userId', 
-      as: 'ride',
-      onDelete: 'CASCADE'
-    });
-    User.hasMany(models.RideDropoffStation, {
-      foreignKey: 'userId', 
-      as: 'userdropoffstation',
-      onDelete: 'CASCADE'
-    });
-    User.hasMany(models.RidePickupStation, {
-      foreignKey: 'userId', 
-      as: 'userpickupstation',
-      onDelete: 'CASCADE'
-    });
-    User.hasMany(models.Transactions, {
-      foreignKey: 'userId', 
-      as: 'usertransactions',
-      onDelete: 'CASCADE'
-    });
-    User.hasOne(models.RiderWallet, {
-      foreignKey: 'userId', 
-      as: 'riderwallet',
-      onDelete: 'CASCADE'
-    });
-    User.hasOne(models.DriverWallet, {
-      foreignKey: 'userId', 
-      as: 'driverwallet',
-      onDelete: 'CASCADE'
-    });  
-    User.hasMany(models.UserRide, {
-      foreignKey: 'userId',
-      as: 'userride',
-      onDelete: 'CASCADE',
-    });
-    User.hasMany(models.TransitWallet, {
-      foreignKey: 'userId', 
-      as: 'transitwallet',
-      onDelete: 'CASCADE'
-    });
-    User.hasMany(models.Activity, {
-      foreignKey: 'userId', 
-      as: 'activities',
-      onDelete: 'CASCADE',
-      onUpdate: 'CASCADE'
+    User.hasOne(models.Company, {
+      foreignKey: 'id',
+      as: 'company',
     });
   };
   return User;
 };
+
+export default User;

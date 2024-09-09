@@ -71,7 +71,7 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: false,
         references: {
-          model: 'Profiles',
+          model: 'Users',
           key: 'id',
         },
       },
@@ -86,8 +86,10 @@ export default (sequelize, DataTypes) => {
     },
     {}
   );
+
+  
   Car.associate = (models) => {
-    Car.belongsTo(models.Profile, {
+    Car.belongsTo(models.User, {
       foreignKey: 'createdBy',
       as: 'user',
     });
@@ -95,7 +97,6 @@ export default (sequelize, DataTypes) => {
       foreignKey: 'supplierId',
       as: 'supplier',
     });
-
     Car.belongsTo(models.CarType, {
       foreignKey: 'typeId',
       as: 'carType',

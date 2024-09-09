@@ -1,49 +1,51 @@
 export default {
   up: (queryInterface, Sequelize) =>
-    queryInterface.createTable('Users', {
+    queryInterface.createTable('Companies', {
       id: {
         allowNull: false,
         primaryKey: true,
         type: Sequelize.UUID,
         defaultValue: Sequelize.UUIDV4,
       },
-      email: {
-        type: Sequelize.STRING,
-        allowNull: false,
-        unique: true,
-      },
-      password: {
+      name: {
         type: Sequelize.STRING,
         allowNull: false,
       },
-      firstName: {
-        type: Sequelize.STRING,
-        allowNull: false,
-      },
-      lastName: {
-        type: Sequelize.STRING,
-        allowNull: false,
-      },
-      phoneNumber: {
-        type: Sequelize.STRING,
-        allowNull: true,
-      },
-      photo: {
-        type: Sequelize.STRING,
-        allowNull: true,
-      },
-      status: {
-        type: Sequelize.ENUM('active', 'inactive'),
-        allowNull: false,
-        defaultValue: 'active',
-      },
-      roleId: {
+      ownerId: {
         type: Sequelize.UUID,
         allowNull: true,
         references: {
-          model: 'Roles',
+          model: 'Users',
           key: 'id',
         },
+      },
+      address: {
+        type: Sequelize.STRING,
+        allowNull: false,
+      },
+      TIN: {
+        type: Sequelize.INTEGER,
+        allowNull: true,
+      },
+      invoiceValidity: {
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
+      commissionType: {
+        type: Sequelize.ENUM('flat', 'percentage'),
+        allowNull: true,
+      },
+      commissionFlat: {
+        type: Sequelize.INTEGER,
+        allowNull: true,
+      },
+      commissionPercentage: {
+        type: Sequelize.INTEGER,
+        allowNull: true,
+      },
+      theme: {
+        type: Sequelize.STRING,
+        allowNull: true,
       },
       verified: {
         type: Sequelize.BOOLEAN,
@@ -59,5 +61,7 @@ export default {
         type: Sequelize.DATE,
       },
     }),
-  down: (queryInterface) => queryInterface.dropTable('Users'),
+  down: (queryInterface, Sequelize) => {
+    queryInterface.dropTable('Companies');
+  },
 };

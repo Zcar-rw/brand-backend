@@ -14,31 +14,6 @@ export default async (req, res, next) => {
       as: 'carMake',
       attributes: { exclude: ['createdAt', 'updatedAt'] },
     },
-    {
-      model: db['CarMeta'],
-      as: 'carMeta',
-      attributes: { exclude: ['createdAt', 'updatedAt'] },
-    },
-    {
-      model: db['RentingInformation'],
-      as: 'RentingInformation',
-      attributes: { exclude: ['createdAt', 'updatedAt'] },
-    },
-    {
-      model: db.Galleries,
-      as: 'Galleries',
-      attributes: { exclude: ['createdAt', 'updatedAt'] },
-    },
-    {
-      model: db['Profile'],
-      as: 'owner',
-      attributes: { exclude: ['createdAt', 'updatedAt'] },
-      include: {
-        model: db['User'],
-        as: 'profile',
-        attributes: { exclude: ['password', 'createdAt', 'updatedAt'] },
-      },
-    },
   ]
   const car = await FindOne('Car', { slug: req.params.slug }, include)
   if (car.errors || !Object.keys(car).length > 0) {

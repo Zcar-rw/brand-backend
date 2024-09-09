@@ -29,43 +29,13 @@ export default (sequelize, DataTypes) => {
           'account',
           'car',
           'booking',
-          'group',
           'payment',
-          'address',
           'inquiry',
           'invite',
-          'ride',
           'subscribe',
-          'misc'
+          'misc',
         ),
-        defaultValue: 'misc'
-      },
-      accountType: {
-        type: DataTypes.ENUM(
-          'driver',
-          'passenger',
-        ),
-        defaultValue: 'passenger'
-      },
-      isForUser: {
-        type: DataTypes.BOOLEAN,
-        allowNull: false,
-        defaultValue: true,
-      },
-      itemId: {
-        type: DataTypes.STRING,
-        allowNull: true,
-        defaultValue: null,
-      },
-      rideId: {
-        type: DataTypes.UUID,
-        allowNull: true,
-        defaultValue: null,
-      },
-      read: {
-        type: DataTypes.BOOLEAN,
-        allowNull: false,
-        defaultValue: false,
+        defaultValue: 'misc',
       },
       createdAt: {
         allowNull: false,
@@ -76,7 +46,7 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.DATE,
       },
     },
-    {}
+    {},
   );
   Notification.associate = (models) => {
     Notification.belongsTo(models.User, {

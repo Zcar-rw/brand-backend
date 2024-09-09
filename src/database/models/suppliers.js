@@ -42,7 +42,7 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.UUID,
         allowNull: false,
         references: {
-          model: 'Profiles',
+          model: 'User',
           key: 'id',
         },
         onUpdate: 'CASCADE',
@@ -60,9 +60,9 @@ export default (sequelize, DataTypes) => {
     {}
   );
   Supplier.associate = (models) => {
-    Supplier.belongsTo(models.Profile, {
+    Supplier.belongsTo(models.User, {
       foreignKey: 'createdBy',
-      as: 'supplier',
+      as: 'user',
     });
   };
   return Supplier;

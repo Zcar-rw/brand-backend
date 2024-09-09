@@ -10,12 +10,9 @@ import {
   Create,
   Update,
   Search,
-  FindOne,
   FindAll,
   FindAndCount,
 } from '../database/queries';
-import CarServices from '../services/CarServices';
-import { ActivitiesServices } from '../services';
 
 export default class CarsController {
   // static async createCar(req, res) {
@@ -36,7 +33,7 @@ export default class CarsController {
     const data = {
       ...req.body,
       status: 'active',
-      createdBy: '6ba5829c-20e7-48bf-8aea-1b4ac64aae21',
+      createdBy: req.body.userId,
       plateNumber: req.body.plateNumber.toUpperCase(),
     };
     // data.ownerId = req.user.user.id;
@@ -55,7 +52,6 @@ export default class CarsController {
       //   data.plateNumber
       // );
 
-      // console.log('@@isPlateNumberExist', isPlateNumberExist);
       // if (isPlateNumberExist) {
       //   return res.status(status.EXIST).json({
       //     error: 'Car of this plate number or VIN is already exists',
@@ -76,7 +72,6 @@ export default class CarsController {
             response,
           });
     } catch (error) {
-      console.log('@@error', error);
       return res.status(status.BAD_REQUEST).json();
     }
   }
@@ -103,16 +98,6 @@ export default class CarsController {
       {
         model: db.CarMake,
         as: 'carMake',
-        attributes: { exclude: ['createdAt', 'updatedAt'] },
-      },
-      {
-        model: db.CarMeta,
-        as: 'carMeta',
-        attributes: { exclude: ['createdAt', 'updatedAt'] },
-      },
-      {
-        model: db.RentingInformation,
-        as: 'RentingInformation',
         attributes: { exclude: ['createdAt', 'updatedAt'] },
       },
     ];
@@ -178,10 +163,6 @@ export default class CarsController {
         {
           model: db.User,
           as: 'user',
-        },
-        {
-          model: db.Profile,
-          as: 'owner',
         },
       ];
       const condition = {};
@@ -325,11 +306,7 @@ export default class CarsController {
         model: db.RentingInformation,
         as: 'RentingInformation',
         attributes: { exclude: ['createdAt', 'updatedAt'] },
-      },
-      {
-        model: db.Profile,
-        as: 'owner',
-      },
+      }
     ];
     const field = 'name';
     const { response, meta } = await Search('Car', key, field, include);
@@ -385,64 +362,7 @@ export default class CarsController {
         });
   }
 
-  static async adminPublishCar(req, res) {
-    try {
-      const { carId } = req.body;
-      const data = {
-        status: 'Available',
-      };
-      const response = await Update('Car', data, {
-        id: carId,
-      });
-      // generating message
-      const { message, subject } = template.car.publish(req.car);
-      // save email
-      const notification = {
-        receiverId: req.car.owner.profile.id,
-        message: `Your car "${req.car.name}" has been published online`,
-        type: 'car',
-        isForUser: true,
-        itemId: req.car.slug,
-      };
-      await helper.mailer(
-        message,
-        subject,
-        req.car.owner.profile.email,
-        notification
-      );
 
-      if (response && response) {
-        return res.status(status.OK).json({
-          response,
-        });
-      }
-    } catch (error) {
-      return res.status(status.NOT_FOUND).send({
-        error: 'The car can not be updated at this moment.',
-      });
-    }
-  }
-
-  static async adminDeclineCar(req, res) {
-    try {
-      const { carId } = req.body;
-      const data = {
-        status: 'Declined',
-      };
-      const response = await Update('Car', data, {
-        id: carId,
-      });
-      if (response && response) {
-        return res.status(status.OK).json({
-          response,
-        });
-      }
-    } catch (error) {
-      return res.status(status.NOT_FOUND).send({
-        error: 'The car can not be updated at this moment.',
-      });
-    }
-  }
 
   static async getUserCars(req, res) {
     try {

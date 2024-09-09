@@ -1,27 +1,35 @@
-import express from 'express'
-import UserController from '../../controllers/UserController'
-import { isAdmin, verifyToken } from '../../middlewares'
-import asyncHandler from '../../middlewares/asyncHandler'
+import express from 'express';
+import UserController from '../../controllers/UserController';
+import { isAdmin, verifyToken, isCompanyAdmin } from '../../middlewares';
+import asyncHandler from '../../middlewares/asyncHandler';
+import userValidations from '../../helpers/validators/userValidate';
 
-const router = express.Router()
+const router = express.Router();
 
+router.get('/', verifyToken, isAdmin, UserController.getAllUsers);
 router.get(
-  '/',
-  // verifyToken,
-  UserController.getAllUsers
-)
-router.put('/user/become-a-driver', verifyToken, UserController.BecomeADriver)
-router.get(
-  '/:userId/admin',
+  '/company/:id/users',
+  verifyToken,
+  isCompanyAdmin,
+  UserController.getAllCompanyUsers,
+);
+router.post(
+  '/register/internal-user',
   verifyToken,
   isAdmin,
-  UserController.getUserProfile
-)
-router.patch(
-  '/:userId/update-user-info',
+  userValidations.registerInternalUser,
+  asyncHandler(UserController.registerInternalUser),
+);
+router.post(
+  '/register/company-user',
   verifyToken,
-  isAdmin,
-  UserController.updateUserRoleByAdmin
-)
+  userValidations.registerCompanyUser,
+  asyncHandler(UserController.registerCompanyUser),
+);
+router.post(
+  '/register/client',
+  userValidations.registerClientUser,
+  asyncHandler(UserController.registerClientUser),
+);
 
-export default router
+export default router;

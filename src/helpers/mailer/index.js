@@ -14,7 +14,7 @@ export default async (message, subject, email, notification = {}) => {
       {
         From: {
           Email: MAILJET_EMAIL_SENDER,
-          Name: 'Reach',
+          Name: 'Kale',
         },
         To: [
           {
@@ -25,23 +25,23 @@ export default async (message, subject, email, notification = {}) => {
         Subject: subject,
         TextPart: subject,
         HTMLPart: template(message),
-        CustomID: 'ReachMail',
+        CustomID: 'KaleMail',
       },
     ],
   });
   request
     .then(() => {
-      if (notification.receiverId) {
-        const mail = {
-          receiverId: notification.receiverId || null,
-          email,
-          message: notification.message,
-          type: notification.type || null,
-          isForUser: notification.isForUser || true,
-          itemId: notification.itemId,
-        };
-        db['Notification'].create(mail);
-      }
+      // if (notification.receiverId) {
+      //   const mail = {
+      //     receiverId: notification.receiverId || null,
+      //     email,
+      //     message: notification.message,
+      //     type: notification.type || null,
+      //     isForUser: notification.isForUser || true,
+      //     itemId: notification.itemId,
+      //   };
+      //   db['Notification'].create(mail);
+      // }
       return;
     })
     .catch((err) => {

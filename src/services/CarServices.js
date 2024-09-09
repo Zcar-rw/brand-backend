@@ -12,7 +12,6 @@ export default class CarServices {
 
   static async getCarByPlateNumber(plateNumber) {
     const car = await FindOne('Car', { plateNumber });
-    console.log('###car', car);
     if (!_.isEmpty(car)) {
       return true;
     }

@@ -9,18 +9,12 @@ const config = envConfigs[env]
 const db = {}
 
 let sequelize
-// if (config.url) {
-//   console.log('DB_DEV_HOST:', process.env.DB_HOST)
-//   console.log('DB_DEV_PORT:', process.env.DB_PORT || 5432)
-//   sequelize = new Sequelize(config.url, config)
-// } else {
 sequelize = new Sequelize(
   config.database,
   config.username,
   config.password,
   config
 )
-// }
 
 fs.readdirSync(__dirname)
   .filter((file) => {
