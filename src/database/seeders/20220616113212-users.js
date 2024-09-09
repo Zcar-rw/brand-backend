@@ -1,11 +1,11 @@
 import { v4 as uuidv4 } from 'uuid';
 import * as helper from './../../helpers';
-import { FindOne } from '../database/queries';
+import { FindOne } from './../queries';
 
 import dotenv from 'dotenv';
 dotenv.config();
 
-const admin = await FindOne('Role', { name: 'admin' });
+const admin = FindOne('Role', { name: 'admin' });
 
 const stations = [
   {
@@ -15,6 +15,7 @@ const stations = [
     firstName: 'Admin',
     lastName: 'Admin',
     phoneNumber: "0788000000",
+    companyId: null,
     roleId: admin.id,
     status: 'active',
     verified: true,

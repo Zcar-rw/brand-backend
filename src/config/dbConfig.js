@@ -1,6 +1,6 @@
-import dotenv from 'dotenv'
+import dotenv from 'dotenv';
 
-dotenv.config()
+dotenv.config();
 
 const config = {
   development: {
@@ -13,6 +13,10 @@ const config = {
     logging: true,
     dialect: 'postgres',
     seederStorage: 'sequelize',
+    ssl: {
+      require: true,
+      rejectUnauthorized: false,
+    },
   },
   test: {
     use_env_variable: 'DATABASE_URL_TEST',
@@ -34,5 +38,5 @@ const config = {
     dialect: 'postgres',
     seederStorage: 'sequelize',
   },
-}
-module.exports = config
+};
+module.exports = config;
