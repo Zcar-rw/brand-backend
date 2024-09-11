@@ -9,6 +9,7 @@ import suppliers from './suppliers';
 import roles from './roles';
 import companies from './companies';
 import files from './files';
+import inquiry from './inquiry';
 
 const router = express.Router();
 
@@ -22,5 +23,6 @@ router.use('/suppliers', suppliers);
 router.use('/roles', roles);
 router.use('/companies', companies);
 router.use('/files', files);
+router.use('/inquiry', inquiry);
 
 export default router;
