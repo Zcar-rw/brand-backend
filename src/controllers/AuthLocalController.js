@@ -36,12 +36,14 @@ export default class AuthLocalController {
   static async login(req, res) {
     const { password } = req.body;
     const user = req.auth;
+   
     try {
       if (!_.isEmpty(user)) {
         const comparePassword = helper.password.compare(
           password,
           user.password || '',
         );
+        console.log('comparePassword', comparePassword);
         if (!comparePassword) {
           return res.status(status.UNAUTHORIZED).json({
             error: 'The credentials you provided are incorrect',
@@ -55,8 +57,11 @@ export default class AuthLocalController {
             type: user.role.type,
           },
         };
+        console.log('payload', payload);
         const token = helper.token.generate(payload);
         delete user.password;
+
+        console.log('token', token);
 
         // GET COMPANY INFO
         const company = await FindOne('Company', {
@@ -83,6 +88,7 @@ export default class AuthLocalController {
         });
       }
     } catch (error) {
+      console.log('error', error);
       return res.status(status.UNAUTHORIZED).json({
         error: 'The credentials you provided are incorrect',
       });
