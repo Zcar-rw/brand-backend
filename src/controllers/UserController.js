@@ -10,6 +10,7 @@ import {
 } from '../database/queries';
 import db from '../database/models';
 import generateErrorResponse from '../helpers/generateErrorResponse';
+
 // /**
 //  * A class to handle user local authentication
 //  */
@@ -32,11 +33,11 @@ export default class UserController {
         as: 'role',
         attributes: { exclude: ['createdAt', 'updatedAt'] },
       },
-      {
-        model: db.Company,
-        as: 'company',
-        attributes: { exclude: ['createdAt', 'updatedAt'] },
-      },
+      // {
+      //   model: db.Company,
+      //   as: 'company',
+      //   attributes: { exclude: ['createdAt', 'updatedAt'] },
+      // },
     ];
     const condition = {};
     const { response, meta } = await FindAndCount(
@@ -155,7 +156,6 @@ export default class UserController {
     const password = '12345678'; // TODO: WILL CHANGE THIS LATER
 
     try {
-      // TODO: REGISTER USER
       const newPassword = helper.password.hash(password);
       const response = await Create('User', {
         password: newPassword,
@@ -193,13 +193,14 @@ export default class UserController {
     } = req.body;
     try {
       // GET USER ROLE
+      console.log('type', type);
       const role = await FindOne('Role', {
-        name: type === 'business' ? 'company-owner' : 'client',
+        name: type === 'business' ? 'cooperate-owner' : 'client',
       });
       // TODO: REGISTER USER
-      const newPassword = helper.password.hash(password);
+      const hashedPassword = helper.password.hash(password);
       const response = await Create('User', {
-        password: newPassword,
+        password: hashedPassword,
         email,
         status: 'active',
         firstName,
@@ -217,8 +218,9 @@ export default class UserController {
           address,
           ownerId: response.id,
           verified: false,
+          theme: '0171C8',
         });
-        const user = await Update(
+        await Update(
           'User',
           {
             companyId: business.id,
@@ -227,24 +229,34 @@ export default class UserController {
             id: response.id,
           },
         );
-      }
 
-      // UPDATE USER COMPANY ID
+        console.log('business', business);
+        const customer = await Create('Customer', {
+          companyId: business.id,
+          userId: null,
+          type: 'company',
+        });
+      } else {
+        const customer = await Create('Customer', {
+          companyId: null,
+          userId: response.id,
+          type: 'individual',
+        });
+      }
 
       // SEND EMAIL TO ACTIVATE THE ACCOUNT
       const message = 'Welcome to Kale.';
       const subject = 'Activate your Kale account';
-      await helper.mailer(message, subject, 'kagaramag@gmail.com');
+      await helper.mailer(message, subject, email);
 
       return res
         .status(status.CREATED)
         .send({ response, message: 'User created successfully' });
     } catch (error) {
       // if error occurred, deleted the created user(if exist)
-      const business = await Delete('User', {
+      await Delete('User', {
         email,
       });
-
       generateErrorResponse(error, res);
       return res.status(status.BAD_REQUEST).send({
         error: generateErrorResponse(error, res),

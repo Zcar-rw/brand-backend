@@ -15,20 +15,6 @@ import {
 } from '../database/queries';
 
 export default class CarsController {
-  // static async createCar(req, res) {
-  //   const data = req.body;
-  //   data.ownerId = req.user.user.id;
-  //   data.slug = helper.generator.slug(req.body.name);
-  //   const response = await Create('Car', data);
-  //   return response && response.errors
-  //     ? res.status(status.BAD_REQUEST).send({
-  //         error: 'Sorry, you can not create a car right now, try again later',
-  //       })
-  //     : res.status(status.CREATED).json({
-  //         response,
-  //       });
-  // }
-
   static async createCar(req, res) {
     const data = {
       ...req.body,
@@ -36,6 +22,7 @@ export default class CarsController {
       createdBy: req.body.userId,
       plateNumber: req.body.plateNumber.toUpperCase(),
     };
+    console.log('data', data);
     // data.ownerId = req.user.user.id;
     // data.typeId = req.body.brandType;
     // data.carMakeId = req.body.brandName;
@@ -72,6 +59,7 @@ export default class CarsController {
             response,
           });
     } catch (error) {
+      console.log('err', error);
       return res.status(status.BAD_REQUEST).json();
     }
   }
@@ -109,7 +97,7 @@ export default class CarsController {
       condition,
       include,
       limit,
-      offset
+      offset,
     );
 
     if (response && !response.length) {
@@ -126,7 +114,7 @@ export default class CarsController {
           meta: helper.generator.meta(
             meta.count,
             limit,
-            parseInt(page, 10) || 1
+            parseInt(page, 10) || 1,
           ),
           response,
         });
@@ -171,7 +159,7 @@ export default class CarsController {
         condition,
         include,
         limit,
-        offset
+        offset,
       );
       if (response && !response.length) {
         return res.status(status.NO_CONTENT).send({
@@ -203,14 +191,21 @@ export default class CarsController {
 
     const include = [
       {
-        model: db.CarType,
-        as: 'carType',
+        model: db.CarModel,
+        as: 'carModel',
         attributes: { exclude: ['createdAt', 'updatedAt'] },
-      },
-      {
-        model: db.CarMake,
-        as: 'carMake',
-        attributes: { exclude: ['createdAt', 'updatedAt'] },
+        include: [
+          {
+            model: db.CarMake,
+            as: 'carMake',
+            attributes: { exclude: ['createdAt', 'updatedAt'] },
+          },
+          {
+            model: db.CarType,
+            as: 'carType',
+            attributes: { exclude: ['createdAt', 'updatedAt'] },
+          },
+        ],
       },
       {
         model: db.Supplier,
@@ -221,15 +216,15 @@ export default class CarsController {
     const attributes = [
       'id',
       'plateNumber',
-      'model',
+      // 'model',
       'supplierId',
-      'typeId',
-      'carMakeId',
+      // 'typeId',
+      // 'carMakeId',
       'amount',
       'baseAmount',
-      'photo',
+      // 'photo',
       'status',
-      'year',
+      // 'year',
       'createdBy',
       'createdAt',
       'updatedAt',
@@ -256,7 +251,7 @@ export default class CarsController {
           limit,
           offset,
         },
-        { logging: false, raw: true }
+        { logging: false, raw: true },
       );
       // return {
       //   response: response.rows,
@@ -272,11 +267,12 @@ export default class CarsController {
         meta: helper.generator.meta(
           response.count,
           limit,
-          parseInt(page, 10) || 1
+          parseInt(page, 10) || 1,
         ),
         response: response.rows,
       });
     } catch (error) {
+      console.log('error', error);
       return res.status(status.BAD_REQUEST).send({
         error: 'Cars not found at this moment, try again later',
       });
@@ -306,7 +302,7 @@ export default class CarsController {
         model: db.RentingInformation,
         as: 'RentingInformation',
         attributes: { exclude: ['createdAt', 'updatedAt'] },
-      }
+      },
     ];
     const field = 'name';
     const { response, meta } = await Search('Car', key, field, include);
@@ -361,8 +357,6 @@ export default class CarsController {
           error: 'The car can not be updated at this moment.',
         });
   }
-
-
 
   static async getUserCars(req, res) {
     try {

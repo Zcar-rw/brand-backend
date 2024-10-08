@@ -33,7 +33,7 @@ export default {
         allowNull: true,
       },
       status: {
-        type: Sequelize.ENUM('active', 'inactive'),
+        type: Sequelize.ENUM('active', 'inactive', 'pending'),
         allowNull: false,
         defaultValue: 'active',
       },

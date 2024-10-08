@@ -1,46 +1,41 @@
 export default {
   up: (queryInterface, Sequelize) =>
-    queryInterface.createTable('Cars', {
+    queryInterface.createTable('CarModels', {
       id: {
         allowNull: false,
         primaryKey: true,
         type: Sequelize.UUID,
         defaultValue: Sequelize.UUIDV4,
       },
-      plateNumber: {
+      name: {
         type: Sequelize.STRING,
         allowNull: false,
       },
-      supplierId: {
-        type: Sequelize.UUID,
+      year: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+      },
+      photo: {
+        type: Sequelize.STRING,
         allowNull: true,
+      },
+      typeId: {
+        type: Sequelize.UUID,
+        allowNull: false,
         references: {
-          model: 'Suppliers',
+          model: 'CarTypes',
           key: 'id',
         },
         onUpdate: 'CASCADE',
         onDelete: 'SET NULL',
       },
-      modelId: {
+      carMakeId: {
         type: Sequelize.UUID,
         allowNull: false,
         references: {
-          model: 'CarModels',
+          model: 'CarMakes',
           key: 'id',
         },
-      },
-      amount: {
-        type: Sequelize.INTEGER,
-        allowNull: true,
-      },
-      baseAmount: {
-        type: Sequelize.INTEGER,
-        allowNull: true,
-      },
-      status: {
-        type: Sequelize.ENUM(['active', 'inactive']),
-        allowNull: false,
-        defaultValue: 'active',
       },
       createdBy: {
         type: Sequelize.UUID,
@@ -52,6 +47,11 @@ export default {
         onUpdate: 'CASCADE',
         onDelete: 'SET NULL',
       },
+      status: {
+        type: Sequelize.ENUM(['active', 'inactive']),
+        allowNull: false,
+        defaultValue: 'active',
+      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE,
@@ -61,5 +61,5 @@ export default {
         type: Sequelize.DATE,
       },
     }),
-  down: (queryInterface) => queryInterface.dropTable('Cars'),
+  down: (queryInterface) => queryInterface.dropTable('CarModels'),
 };

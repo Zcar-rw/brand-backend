@@ -1,7 +1,3 @@
-import dotenv from 'dotenv';
-
-dotenv.config();
-
 export default (sequelize, DataTypes) => {
   const Car = sequelize.define(
     'Car',
@@ -15,11 +11,10 @@ export default (sequelize, DataTypes) => {
       plateNumber: {
         type: DataTypes.STRING,
         allowNull: false,
-      },
-      model: {
-        type: DataTypes.STRING,
-        allowNull: false,
-        unique: true,
+        unique: {
+          args: true,
+          msg: 'Plate number already exists!',
+        },
       },
       supplierId: {
         type: DataTypes.UUID,
@@ -30,19 +25,11 @@ export default (sequelize, DataTypes) => {
         },
         onUpdate: 'CASCADE',
       },
-      typeId: {
+      modelId: {
         type: DataTypes.UUID,
         allowNull: false,
         references: {
-          model: 'CarTypes',
-          key: 'id',
-        },
-      },
-      carMakeId: {
-        type: DataTypes.UUID,
-        allowNull: false,
-        references: {
-          model: 'CarMake',
+          model: 'CarModels',
           key: 'id',
         },
       },
@@ -54,18 +41,10 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         allowNull: true,
       },
-      photo: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
       status: {
         type: DataTypes.ENUM(['active', 'inactive']),
         allowNull: false,
         defaultValue: 'active',
-      },
-      year: {
-        type: DataTypes.INTEGER,
-        allowNull: true,
       },
       createdBy: {
         type: DataTypes.STRING,
@@ -97,13 +76,9 @@ export default (sequelize, DataTypes) => {
       foreignKey: 'supplierId',
       as: 'supplier',
     });
-    Car.belongsTo(models.CarType, {
-      foreignKey: 'typeId',
-      as: 'carType',
-    });
-    Car.belongsTo(models.CarMake, {
-      foreignKey: 'carMakeId',
-      as: 'carMake',
+    Car.belongsTo(models.CarModel, {
+      foreignKey: 'modelId',
+      as: 'carModel',
     });
   };
   Car.refreshAttributes();

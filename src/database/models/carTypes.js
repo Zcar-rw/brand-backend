@@ -45,7 +45,7 @@ export default (sequelize, DataTypes) => {
     {}
   );
   CarType.associate = (models) => {
-    CarType.hasMany(models.Car, {
+    CarType.hasMany(models.CarModel, {
       foreignKey: 'typeId',
       onUpdate: 'CASCADE',
       onDelete: 'CASCADE',

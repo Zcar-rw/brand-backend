@@ -4,7 +4,7 @@ const userFields = {
   firstName: Joi.string().min(3).max(30).required(),
   lastName: Joi.string().min(3).max(30).required(),
   email: Joi.string().email().required(),
-  phoneNumber: Joi.string().length(10).required(),
+  phoneNumber: Joi.string().required(),
 };
 
 const internalUserSchema = Joi.object({

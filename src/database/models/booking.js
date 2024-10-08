@@ -1,14 +1,16 @@
-export default {
-  up: (queryInterface, Sequelize) =>
-    queryInterface.createTable('Inquiries', {
+const Booking = (sequelize, DataTypes) => {
+  const Booking = sequelize.define(
+    'Booking',
+    {
       id: {
         allowNull: false,
         primaryKey: true,
-        type: Sequelize.UUID,
-        defaultValue: Sequelize.UUIDV4,
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4,
       },
+
       typeId: {
-        type: Sequelize.UUID,
+        type: DataTypes.UUID,
         allowNull: false,
         references: {
           model: 'CarTypes',
@@ -18,7 +20,7 @@ export default {
         onDelete: 'SET NULL',
       },
       createdBy: {
-        type: Sequelize.UUID,
+        type: DataTypes.UUID,
         allowNull: true,
         references: {
           model: 'Users',
@@ -28,7 +30,7 @@ export default {
         onDelete: 'SET NULL',
       },
       companyId: {
-        type: Sequelize.UUID,
+        type: DataTypes.UUID,
         allowNull: true,
         references: {
           model: 'Companies',
@@ -39,46 +41,62 @@ export default {
       },
       startDate: {
         allowNull: false,
-        type: Sequelize.DATE,
+        type: DataTypes.DATE,
       },
       endDate: {
         allowNull: false,
-        type: Sequelize.DATE,
+        type: DataTypes.DATE,
       },
       message: {
         allowNull: false,
-        type: Sequelize.STRING,
+        type: DataTypes.DATE,
       },
       firstName: {
-        type: Sequelize.STRING,
+        type: DataTypes.STRING,
         allowNull: true,
       },
       lastName: {
-        type: Sequelize.STRING,
+        type: DataTypes.STRING,
         allowNull: true,
       },
       email: {
-        type: Sequelize.STRING,
+        type: DataTypes.STRING,
         allowNull: true,
       },
       phone: {
-        type: Sequelize.STRING,
+        type: DataTypes.STRING,
         allowNull: true,
       },
       type: {
-        type: Sequelize.ENUM('company', 'client', 'unknown'),
+        type: DataTypes.ENUM('cooperate', 'agent', 'individual', 'internal'),
         allowNull: true,
       },
       createdAt: {
         allowNull: false,
-        type: Sequelize.DATE,
+        type: DataTypes.DATE,
       },
       updatedAt: {
         allowNull: false,
-        type: Sequelize.DATE,
+        type: DataTypes.DATE,
       },
-    }),
-  down: (queryInterface, Sequelize) => {
-    queryInterface.dropTable('Inquiries');
-  },
+    },
+    {},
+  );
+  Booking.associate = (models) => {
+    Booking.belongsTo(models.Company, {
+      foreignKey: 'companyId',
+      as: 'company',
+    });
+    Booking.belongsTo(models.User, {
+      foreignKey: 'createdBy',
+      as: 'user',
+    });
+    Booking.belongsTo(models.CarType, {
+      foreignKey: 'typeId',
+      as: 'carType',
+    });
+  };
+  return Booking;
 };
+
+export default Booking;

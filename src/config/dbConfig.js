@@ -13,6 +13,8 @@ const config = {
     logging: true,
     dialect: 'postgres',
     seederStorage: 'sequelize',
+    logging: (msg) => console.log(msg),
+    benchmark: true,
     ssl: {
       require: true,
       rejectUnauthorized: false,

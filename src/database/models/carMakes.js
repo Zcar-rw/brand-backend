@@ -19,7 +19,7 @@ export default (sequelize, DataTypes) => {
       slug: {
         type: DataTypes.STRING,
         allowNull: false,
-        unique: true
+        unique: true,
       },
       photo: {
         type: DataTypes.STRING,
@@ -38,14 +38,8 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.DATE,
       },
     },
-    {}
+    {},
   );
-  CarMake.associate = (models) => {
-    CarMake.hasMany(models.Car, {
-      foreignKey: 'carMakeId',
-      onUpdate: 'CASCADE',
-      onDelete: 'CASCADE',
-    });
-  };
+  CarMake.associate = (models) => {};
   return CarMake;
 };

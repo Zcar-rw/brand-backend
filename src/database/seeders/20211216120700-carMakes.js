@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-const types = [
+const makes = [
   {
     id: uuidv4(),
     name: 'Audi',
@@ -579,7 +579,7 @@ const types = [
 ];
 
 export default {
-  up: (queryInterface) => queryInterface.bulkInsert('CarMakes', types, {}),
+  up: (queryInterface) => queryInterface.bulkInsert('CarMakes', makes, {}),
 
   down: (queryInterface) => queryInterface.bulkDelete('CarMakes', null, {}),
 };

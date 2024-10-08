@@ -36,6 +36,8 @@ export default class AuthLocalController {
   static async login(req, res) {
     const { password } = req.body;
     const user = req.auth;
+    console.log('user', user)
+    console.log('password', password)
    
     try {
       if (!_.isEmpty(user)) {
@@ -57,11 +59,9 @@ export default class AuthLocalController {
             type: user.role.type,
           },
         };
-        console.log('payload', payload);
         const token = helper.token.generate(payload);
         delete user.password;
 
-        console.log('token', token);
 
         // GET COMPANY INFO
         const company = await FindOne('Company', {
@@ -73,8 +73,6 @@ export default class AuthLocalController {
           `Dear ${user.firstName}, Welcome back to Kale!`,
           'account',
         );
-        if (!_.isEmpty(company)) {
-        }
         return (
           user &&
           res.status(status.OK).json({

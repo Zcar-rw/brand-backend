@@ -18,7 +18,7 @@ module.exports = {
         allowNull: false,
       },
       type: {
-        type: Sequelize.ENUM('internal', 'company', 'client'),
+        type: Sequelize.ENUM('internal', 'cooperate', 'client', 'agent'),
         defaultValue: 'internal',
       },
       createdAt: {

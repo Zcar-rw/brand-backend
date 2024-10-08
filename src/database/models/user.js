@@ -17,7 +17,7 @@ const User = (sequelize, DataTypes) => {
         allowNull: false,
         unique: {
           args: true,
-          msg: 'Email address is already in use!',
+          msg: 'Email address already exists!',
         },
       },
       firstName: {
@@ -41,23 +41,15 @@ const User = (sequelize, DataTypes) => {
         allowNull: false,
       },
       status: {
-        type: DataTypes.ENUM('active', 'inactive'),
+        type: DataTypes.ENUM('active', 'inactive', 'pending'),
         allowNull: false,
-        defaultValue: 'inactive',
+        defaultValue: 'pending',
       },
       roleId: {
         type: DataTypes.UUID,
         allowNull: false,
         references: {
           model: 'Roles',
-          key: 'id',
-        },
-      },
-      companyId: {
-        type: DataTypes.UUID,
-        allowNull: true,
-        references: {
-          model: 'Companies',
           key: 'id',
         },
       },
@@ -82,10 +74,6 @@ const User = (sequelize, DataTypes) => {
     User.belongsTo(models.Role, {
       foreignKey: 'roleId',
       as: 'role',
-    });
-    User.hasOne(models.Company, {
-      foreignKey: 'id',
-      as: 'company',
     });
   };
   return User;

@@ -8,7 +8,7 @@ import status from '../config/status';
 import { FindAndCount, Create, findAll, FindOne } from '../database/queries';
 
 export default class CompaniesController {
-  static async fetchCompanies(req, res) {
+  static async fetchAccounts(req, res) {
     const { page, limit } = req.query;
     if (!page) {
       return res.status(status.BAD_REQUEST).send({
@@ -21,9 +21,18 @@ export default class CompaniesController {
 
     try {
       const condition = {};
-      const include = [];
+      const include = [
+        {
+          model: db.User,
+          as: 'user',
+        },
+        {
+          model: db.Company,
+          as: 'company',
+        },
+      ];
       const { response, meta } = await FindAndCount(
-        'Company',
+        'Customer',
         condition,
         include,
         limit,
@@ -40,6 +49,7 @@ export default class CompaniesController {
         response,
       });
     } catch (error) {
+      console.log('err', error);
       return res.status(status.BAD_REQUEST).send({
         error: 'companies not found at this moment, try again later',
       });

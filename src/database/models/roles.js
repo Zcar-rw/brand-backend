@@ -22,7 +22,7 @@ export default (sequelize, DataTypes) => {
         allowNull: false,
       },
       type: {
-        type: DataTypes.ENUM('internal', 'company', 'client'),
+        type: DataTypes.ENUM('internal', 'cooperate', 'client', 'agent'),
         allowNull: false,
         defaultValue: 'internal',
       },

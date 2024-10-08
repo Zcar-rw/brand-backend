@@ -9,7 +9,7 @@ router.get(
   '/',
   verifyToken,
   isAdmin,
-  asyncHandler(CompaniesController.fetchCompanies),
+  asyncHandler(CompaniesController.fetchAccounts),
 );
 router.get(
   '/:id/details',
