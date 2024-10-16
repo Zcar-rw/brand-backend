@@ -6,7 +6,7 @@ const schema = {
     supplierId: Joi.string().required(),
     amount: Joi.number().required(),
     baseAmount: Joi.number().required(),
-    carMakeId: Joi.string().required(),
+    // carMakeId: Joi.string().required(),
     plateNumber: Joi.string()
       .regex(/^R[A-Z]{2}\d{3}[A-Z]$/)
       .required(),
@@ -20,7 +20,7 @@ const carValidations = {
       supplierId: req.body.supplierId,
       amount: req.body.amount,
       baseAmount: req.body.baseAmount,
-      carMakeId: req.body.carMakeId,
+      // carMakeId: req.body.carMakeId,
       plateNumber: req.body.plateNumber,
     });
     if (error) {

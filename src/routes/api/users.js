@@ -31,5 +31,11 @@ router.post(
   userValidations.registerClientUser,
   asyncHandler(UserController.registerClientUser),
 );
+router.put(
+  '/:id/update/internal-user',
+  verifyToken,
+  isAdmin,
+  asyncHandler(UserController.updateUser),
+);
 
 export default router;

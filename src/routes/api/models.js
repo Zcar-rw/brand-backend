@@ -19,5 +19,23 @@ router.post(
   carModelValidations.carModelCreation,
   asyncHandler(CarModelController.createModel),
 );
+router.put(
+  '/:id/update',
+  verifyToken,
+  isAdmin,
+  asyncHandler(CarModelController.updateModel),
+);
+router.put(
+  '/:id/status',
+  verifyToken,
+  isAdmin,
+  asyncHandler(CarModelController.updateModelStatus),
+);
+// router.get(
+//   '/:id/type',
+//   verifyToken,
+//   isAdmin,
+//   asyncHandler(CarModelController.listModelsByCars),
+// );
 
 export default router;

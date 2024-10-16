@@ -1,4 +1,5 @@
 import status from '../config/status'
+import db from '../database/models'
 import { FindOne } from '../database/queries'
 /**
  * @param {object} req Request to the route
@@ -7,11 +8,21 @@ import { FindOne } from '../database/queries'
  * @returns {object} returned response
  */
 export default async (req, res, next) => {
-    const user = await FindOne('User', {
-      email: req.body.email,
-      status: 'active',
-      // role: 'admin',
-    })
+    const user = await FindOne(
+      'User',
+      {
+        email: req.body.email,
+        status: 'active',
+        // role: 'admin',
+      },
+      [
+        {
+          model: db.Role,
+          as: 'role',
+          attributes: { exclude: ['createdAt', 'updatedAt'] },
+        },
+      ],
+    );
     if (!Object.keys(user).length) {
       return res.status(status.UNAUTHORIZED).json({
         error: `Account with '${req.body.email}' might not have the right permissions to login here`,

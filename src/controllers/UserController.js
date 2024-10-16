@@ -69,7 +69,6 @@ export default class UserController {
   static async getAllCompanyUsers(req, res) {
     let { page, limit } = req.query;
     const { id } = req.params;
-    console.log('@@@@id', id);
 
     if (!page) {
       return res.status(status.BAD_REQUEST).send({
@@ -260,6 +259,36 @@ export default class UserController {
       generateErrorResponse(error, res);
       return res.status(status.BAD_REQUEST).send({
         error: generateErrorResponse(error, res),
+      });
+    }
+  }
+
+  static async updateUser(req, res) {
+    const { id } = req.params;
+    const { firstName, lastName, email, phoneNumber, roleId } = req.body;
+    try {
+      const response = await Update(
+        'User',
+        {
+          firstName,
+          lastName,
+          email,
+          phoneNumber,
+          roleId,
+        },
+        { id },
+      );
+      return response && response.errors
+        ? res.status(status.BAD_REQUEST).send({
+            error:
+              'Sorry, you can not update this user right now, try again later',
+          })
+        : res.status(status.CREATED).json({
+            response,
+          });
+    } catch (error) {
+      return res.status(status.INTERNAL_SERVER_ERROR).send({
+        error: 'Something went wrong, try again later',
       });
     }
   }

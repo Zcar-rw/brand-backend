@@ -23,5 +23,17 @@ router.get(
   '/:id/details',
   asyncHandler(SuppliersController.fetchSupplierDetails),
 );
+router.put(
+  '/:id/update',
+  verifyToken,
+  isAdmin,
+  asyncHandler(SuppliersController.updateSupplier),
+);
+router.put(
+  '/:id/status',
+  verifyToken,
+  isAdmin,
+  asyncHandler(SuppliersController.updateSupplierStatus),
+);
 
 export default router;

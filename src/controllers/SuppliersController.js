@@ -4,7 +4,7 @@ import _ from 'lodash';
 import db from '../database/models';
 import * as helper from '../helpers';
 import status from '../config/status';
-import { FindAndCount, Create, findAll, FindOne } from '../database/queries';
+import { FindAndCount, Create, FindOne } from '../database/queries';
 import generateErrorResponse from '../helpers/generateErrorResponse';
 
 export default class SuppliersController {
@@ -18,7 +18,6 @@ export default class SuppliersController {
       status: 'active',
       createdBy: userId,
     };
-    console.log('@@@data', data);
     try {
       // data.ownerId = req.user.user.id;
       const response = await Create('Supplier', data);
@@ -120,6 +119,115 @@ export default class SuppliersController {
     } catch (error) {
       return res.status(status.BAD_REQUEST).send({
         error: 'Suppliers not found at this moment, try again later',
+      });
+    }
+  }
+
+  static async fetchSupplierCars(req, res) {
+    const { id } = req.params;
+    const { page, limit } = req.query;
+    if (!page) {
+      return res.status(status.BAD_REQUEST).send({
+        response: [],
+        error: 'Sorry, pagination parameters are required[page, limit]',
+      });
+    }
+    const count = limit || 9;
+    const offset = page === 1 ? 0 : (parseInt(page, 10) - 1) * count;
+
+    try {
+      const condition = {
+        supplierId: id,
+      };
+      const include = [
+        {
+          model: db.CarType,
+          as: 'carType',
+          attributes: { exclude: ['createdAt', 'updatedAt'] },
+        },
+        {
+          model: db.CarMake,
+          as: 'carMake',
+          attributes: { exclude: ['createdAt', 'updatedAt'] },
+        },
+      ];
+
+      const { response, meta } = await FindAndCount(
+        'Car',
+        condition,
+        include,
+        limit,
+        offset,
+      );
+
+      if (response && !response.length) {
+        return res.status(status.NO_CONTENT).send({
+          response: [],
+          error: 'Sorry, No cars found!',
+        });
+      }
+      return res.status(status.OK).json({
+        meta: helper.generator.meta(meta.count, limit, parseInt(page, 10) || 1),
+        response,
+      });
+    } catch (error) {
+      return res.status(status.BAD_REQUEST).send({
+        error: 'Cars not found at this moment, try again later',
+      });
+    }
+  }
+
+  static async updateSupplier(req, res) {
+    const { id } = req.params;
+    const { name, email, address, tin } = req.body;
+    const data = {
+      name,
+      email,
+      address,
+      tin,
+    };
+    try {
+      const response = await db.Supplier.update(data, {
+        where: {
+          id,
+        },
+      });
+      return response && response.errors
+        ? res.status(status.BAD_REQUEST).send({
+            error: 'Sorry, you can not update this supplier right now, try again later',
+          })
+        : res.status(status.CREATED).json({
+            response,
+          });
+    } catch (error) {
+      return res.status(status.INTERNAL_SERVER_ERROR).send({
+        error: 'Something went wrong, try again later',
+      });
+    }
+  } 
+
+  static async updateSupplierStatus(req, res) {
+    const { id } = req.params;
+    const { status } = req.body;
+    try {
+      const response = await db.Supplier.update(
+        { status },
+        {
+          where: {
+            id,
+          },
+        },
+      );
+      return response && response.errors
+        ? res.status(status.BAD_REQUEST).send({
+            error: 'Sorry, you can not update this supplier right now, try again later',
+          })
+        : res.status(status.CREATED).json({
+            response,
+          });
+    } catch (error) {
+      return res.status(status.INTERNAL_SERVER_ERROR).send({
+        error: 'Something went wrong, try again later',
       });
     }
   }

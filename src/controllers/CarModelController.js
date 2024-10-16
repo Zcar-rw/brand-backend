@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import db from '../database/models';
 import status from '../config/status';
-import { FindAndCount, Create } from '../database/queries';
+import { FindAndCount, Create, FindOne } from '../database/queries';
 import * as helper from '../helpers';
 import generateErrorResponse from '../helpers/generateErrorResponse';
 
@@ -78,6 +78,18 @@ export default class CarTypesController {
     };
     try {
       // data.ownerId = req.user.user.id;
+      const carMake = await FindOne('CarMake', { id: carMakeId });
+      if (!carMake) {
+        return res.status(status.BAD_REQUEST).send({
+          error: 'Sorry, car make not found!',
+        });
+      }
+      const carType = await FindOne('CarType', { id: typeId });
+      if (!carType) {
+        return res.status(status.BAD_REQUEST).send({
+          error: 'Sorry, car type not found!',
+        });
+      }
       const response = await Create('CarModel', data);
       return response && response.errors
         ? res.status(status.BAD_REQUEST).send({
@@ -95,4 +107,102 @@ export default class CarTypesController {
       });
     }
   }
+
+  static async updateModel(req, res) {
+    const { id } = req.params;
+    const { name, year, typeId, carMakeId, photo, userId } = req.body;
+
+    const data = {
+      name,
+      year,
+      typeId,
+      carMakeId,
+      photo,
+      updatedBy: userId,
+    };
+    try {
+      const response = await db.CarModel.update(data, {
+        where: { id },
+        returning: true,
+      });
+
+      return response && response.errors
+        ? res.status(status.BAD_REQUEST).send({
+            error: 'Sorry, you can not update this model right now, try again later',
+          })
+        : res.status(status.OK).json({
+            response: response[1],
+          });
+    } catch (error) {
+      generateErrorResponse(error, res);
+      return res.status(status.BAD_REQUEST).send({
+        error: generateErrorResponse(error, res),
+      });
+    }
+  }
+
+  static async updateModelStatus(req, res) {
+    const { id } = req.params;
+    const { status, userId } = req.body;
+
+    const data = {
+      status,
+      updatedBy: userId,
+    };
+    try {
+      const response = await db.CarModel.update(data, {
+        where: { id },
+        returning: true,
+      });
+
+      return response && response.errors
+        ? res.status(status.BAD_REQUEST).send({
+            error: 'Sorry, you can not update this model right now, try again later',
+          })
+        : res.status(status.OK).json({
+            response: response[1],
+          });
+    } catch (error) {
+      generateErrorResponse(error, res);
+      return res.status(status.BAD_REQUEST).send({
+        error: generateErrorResponse(error, res),
+      });
+    }
+  }
+
+  // static async listModelsByCars(req, res) {
+  //   const { carMakeId } = req.params;
+  //   const include = [
+  //     {
+  //       model: db.CarType,
+  //       as: 'carType',
+  //       attributes: { exclude: ['createdAt', 'updatedAt'] },
+  //     },
+  //     {
+  //       model: db.CarMake,
+  //       as: 'carMake',
+  //       attributes: { exclude: ['createdAt', 'updatedAt'] },
+  //     },
+  //   ];
+  //   const condition = {
+  //     carMakeId,
+  //   };
+  //   const order = [['name', 'DESC']];
+  //   const { response } = await FindAndCount('CarModel', condition, include);
+
+  //   if (response && !response.length) {
+  //     return res.status(status.NO_CONTENT).send({
+  //       response: [],
+  //       error: 'Sorry, No model found!',
+  //     });
+  //   }
+
+  //   return response && response.errors
+  //     ? res.status(status.BAD_REQUEST).send({
+  //         error: 'Car model not found at this moment, try again later',
+  //       })
+  //     : res.status(status.OK).json({
+  //         response,
+  //       });
+  // }
 }
