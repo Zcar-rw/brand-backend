@@ -397,4 +397,51 @@ export default class CarsController {
       });
     }
   }
+
+  static async getCarsBySupplier(req, res) {
+    try {
+      const { supplierId } = req.params;
+
+      const include = [
+        {
+          model: db.CarModel,
+          as: 'carModel',
+          attributes: { exclude: ['createdAt', 'updatedAt'] },
+          include: [
+            {
+              model: db.CarMake,
+              as: 'carMake',
+              attributes: { exclude: ['createdAt', 'updatedAt'] },
+            },
+            {
+              model: db.CarType,
+              as: 'carType',
+              attributes: { exclude: ['createdAt', 'updatedAt'] },
+            },
+          ],
+        },
+        {
+          model: db.Supplier,
+          as: 'supplier',
+          attributes: { exclude: ['createdAt', 'updatedAt', 'createdBy', 'tin'] },
+        },
+      ];
+      const { response, meta } = await FindAll('Car', {
+        supplierId,
+      }, include);
+      if (response && !response.length) {
+        return res.status(status.NOT_FOUND).send({
+          error: 'Sorry, No cars found!',
+        });
+      }
+      return res.status(status.OK).json({
+        response,
+      });
+    } catch (error) {
+      console.log(error)
+      return res.status(status.BAD_REQUEST).send({
+        error: 'Cars not found at this moment, try again later',
+      });
+    }
+  }
 }

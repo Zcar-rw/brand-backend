@@ -67,5 +67,10 @@ router.get(
   isAdmin,
   asyncHandler(CarsController.getUserCars),
 );
+router.get(
+  '/:supplierId/supplier',
+  verifyToken,
+  asyncHandler(CarsController.getCarsBySupplier),
+)
 
 export default router;
