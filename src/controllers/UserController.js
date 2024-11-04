@@ -66,6 +66,59 @@ export default class UserController {
           ),
         });
   }
+
+  static async getCustomers(req, res) {
+    let { page, limit } = req.query;
+    if (!page) {
+      return res.status(status.BAD_REQUEST).send({
+        response: [],
+        error: 'Sorry, pagination parameters are required[page, limit]',
+      });
+    }
+
+    limit = limit || 5;
+    const offset = page === 1 ? 0 : (parseInt(page, 10) - 1) * limit;
+
+    const include = [
+      // {
+      //   model: db.Role,
+      //   as: 'role',
+      //   attributes: { exclude: ['createdAt', 'updatedAt'] },
+      // },
+      // {
+      //   model: db.Customer,
+      //   as: 'customer',
+      //   attributes: { exclude: ['createdAt', 'updatedAt'] },
+      // },
+    ];
+    const condition = {};
+    const { response, meta } = await FindAndCount(
+      'Customer',
+      condition,
+      include,
+      limit,
+      offset,
+    );
+    if (response && !response.length) {
+      return res.status(status.NO_CONTENT).send({
+        response: [],
+        error: 'Sorry, No booking found!',
+      });
+    }
+    return response && response.errors
+      ? res.status(status.BAD_REQUEST).send({
+          error: 'Users can not be retrieved at this moment, try again later',
+        })
+      : res.status(status.OK).json({
+          response,
+          meta: helper.generator.meta(
+            meta.count,
+            limit,
+            parseInt(page, 10) || 1,
+          ),
+        });
+  }
+
   static async getAllCompanyUsers(req, res) {
     let { page, limit } = req.query;
     const { id } = req.params;
@@ -165,6 +218,7 @@ export default class UserController {
         phoneNumber,
         roleId,
         companyId,
+        verified: true,
       });
 
       return res

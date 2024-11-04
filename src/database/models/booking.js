@@ -1,4 +1,4 @@
-const Booking = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   const Booking = sequelize.define(
     'Booking',
     {
@@ -8,17 +8,16 @@ const Booking = (sequelize, DataTypes) => {
         type: DataTypes.UUID,
         defaultValue: DataTypes.UUIDV4,
       },
-
-      typeId: {
-        type: DataTypes.UUID,
-        allowNull: false,
-        references: {
-          model: 'CarTypes',
-          key: 'id',
-        },
-        onUpdate: 'CASCADE',
-        onDelete: 'SET NULL',
-      },
+      // typeId: {
+      //   type: DataTypes.UUID,
+      //   allowNull: false,
+      //   references: {
+      //     model: 'CarTypes',
+      //     key: 'id',
+      //   },
+      //   onUpdate: 'CASCADE',
+      //   onDelete: 'SET NULL',
+      // },
       createdBy: {
         type: DataTypes.UUID,
         allowNull: true,
@@ -29,47 +28,53 @@ const Booking = (sequelize, DataTypes) => {
         onUpdate: 'CASCADE',
         onDelete: 'SET NULL',
       },
-      companyId: {
+      customerId: {
         type: DataTypes.UUID,
         allowNull: true,
         references: {
-          model: 'Companies',
+          model: 'Customers',
           key: 'id',
         },
         onUpdate: 'CASCADE',
         onDelete: 'SET NULL',
       },
-      startDate: {
-        allowNull: false,
-        type: DataTypes.DATE,
-      },
-      endDate: {
-        allowNull: false,
-        type: DataTypes.DATE,
+      // startDate: {
+      //   allowNull: false,
+      //   type: DataTypes.DATE,
+      // },
+      // endDate: {
+      //   allowNull: false,
+      //   type: DataTypes.DATE,
+      // },
+      // firstName: {
+      //   type: DataTypes.STRING,
+      //   allowNull: true,
+      // },
+      // lastName: {
+      //   type: DataTypes.STRING,
+      //   allowNull: true,
+      // },
+      // email: {
+      //   type: DataTypes.STRING,
+      //   allowNull: true,
+      // },
+      // phone: {
+      //   type: DataTypes.STRING,
+      //   allowNull: true,
+      // },
+      service: {
+        type: DataTypes.ENUM('carHire', 'airportShuttle', 'events'),
+        defaultValue: 'carHire',
+        allowNull: true,
       },
       message: {
-        allowNull: false,
         type: DataTypes.DATE,
+        allowNull: false,
       },
-      firstName: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
-      lastName: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
-      email: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
-      phone: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
-      type: {
-        type: DataTypes.ENUM('cooperate', 'agent', 'individual', 'internal'),
-        allowNull: true,
+      status: {
+        type: DataTypes.ENUM('active', 'inactive'),
+        defaultValue: 'active',
+        allowNull: false,
       },
       createdAt: {
         allowNull: false,
@@ -82,21 +87,30 @@ const Booking = (sequelize, DataTypes) => {
     },
     {},
   );
+  // Booking.associate = (models) => {
+  //   Booking.belongsTo(models.Company, {
+  //     foreignKey: 'companyId',
+  //     as: 'company',
+  //   });
+  //   Booking.belongsTo(models.User, {
+  //     foreignKey: 'createdBy',
+  //     as: 'user',
+  //   });
+  //   Booking.belongsTo(models.CarType, {
+  //     foreignKey: 'typeId',
+  //     as: 'carType',
+  //   });
+  // };
   Booking.associate = (models) => {
-    Booking.belongsTo(models.Company, {
-      foreignKey: 'companyId',
-      as: 'company',
-    });
     Booking.belongsTo(models.User, {
       foreignKey: 'createdBy',
       as: 'user',
     });
-    Booking.belongsTo(models.CarType, {
-      foreignKey: 'typeId',
-      as: 'carType',
+    Booking.belongsTo(models.Customer, {
+      foreignKey: 'customerId',
+      as: 'customer',
     });
   };
   return Booking;
 };
 
-export default Booking;

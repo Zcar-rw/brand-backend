@@ -27,7 +27,7 @@ router.post(
   asyncHandler(UserController.registerCompanyUser),
 );
 router.post(
-  '/register/client',
+  '/register/client', // create corporate and individual user
   userValidations.registerClientUser,
   asyncHandler(UserController.registerClientUser),
 );
@@ -37,5 +37,10 @@ router.put(
   isAdmin,
   asyncHandler(UserController.updateUser),
 );
+router.get(
+  '/customers',
+  verifyToken,
+  asyncHandler(UserController.getCustomers),
+)
 
 export default router;

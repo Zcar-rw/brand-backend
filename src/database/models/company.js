@@ -2,7 +2,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const Company = (sequelize, DataTypes) => {
+export default (sequelize, DataTypes) => {
   const Company = sequelize.define(
     'Company',
     {
@@ -76,5 +76,3 @@ const Company = (sequelize, DataTypes) => {
   };
   return Company;
 };
-
-export default Company;

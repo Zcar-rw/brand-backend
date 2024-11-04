@@ -17,7 +17,7 @@ export default async (req, res, next) => {
       {
         email: req.body.email,
         status: 'active',
-        verified: true
+        // verified: true
       },
       include,
     );

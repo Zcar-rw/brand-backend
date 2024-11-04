@@ -61,7 +61,5 @@ export default {
         type: Sequelize.DATE,
       },
     }),
-  down: (queryInterface, Sequelize) => {
-    queryInterface.dropTable('Companies');
-  },
+  down: queryInterface => queryInterface.dropTable('Companies')
 };

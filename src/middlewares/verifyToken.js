@@ -32,6 +32,7 @@ export default async (req, res, next) => {
     },
   ];
   const user = await FindOne('User', { id: decodedToken.id }, include);
+  console.log(user)
   if (!_.isEmpty(user)) {
     delete user.password;
     req.user = user.get();
