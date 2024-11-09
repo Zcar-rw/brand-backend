@@ -16,6 +16,7 @@ router.post(
   '/create/multiple',
   verifyToken,
   bookingValidations.multipleBookingCreation,
+  bookingValidations.bookingInfoCreation,
   asyncHandler(BookingController.createMultipleBookings),
 );
 router.get('/', verifyToken, asyncHandler(BookingController.getBookings));
@@ -29,6 +30,12 @@ router.get(
   '/company/:id',
   verifyToken,
   asyncHandler(BookingController.getBookingByCompany),
+);
+router.patch(
+  '/:id/update',
+  verifyToken,
+  bookingValidations.bookingStatusUpdate,
+  asyncHandler(BookingController.updateBooking),
 );
 
 export default router;

@@ -30,7 +30,6 @@ const inquiryValidations = {
       companyId: req.body.companyId,
     });
     if (error) {
-      console.log('hello')
       return res.status(400).json({
         error: error.details[0].message.replace(/["'`]+/g, ''),
       });

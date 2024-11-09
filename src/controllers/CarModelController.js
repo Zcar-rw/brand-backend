@@ -100,7 +100,6 @@ export default class CarTypesController {
             response,
           });
     } catch (error) {
-      console.log('rerr', error);
       generateErrorResponse(error, res);
       return res.status(status.BAD_REQUEST).send({
         error: generateErrorResponse(error, res),

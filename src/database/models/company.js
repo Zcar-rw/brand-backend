@@ -73,6 +73,10 @@ export default (sequelize, DataTypes) => {
       foreignKey: 'ownerId',
       as: 'owner',
     });
+    Company.hasMany(models.Customer, {
+      foreignKey: 'companyId',
+      as: 'customers',
+    });
   };
   return Company;
 };

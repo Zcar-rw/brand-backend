@@ -36,8 +36,6 @@ export default class AuthLocalController {
   static async login(req, res) {
     const { password } = req.body;
     const user = req.auth;
-    console.log('user', user)
-    console.log('password', password)
    
     try {
       if (!_.isEmpty(user)) {
@@ -45,7 +43,6 @@ export default class AuthLocalController {
           password,
           user.password || '',
         );
-        console.log('comparePassword', comparePassword);
         if (!comparePassword) {
           return res.status(status.UNAUTHORIZED).json({
             error: 'The credentials you provided are incorrect',
@@ -86,7 +83,6 @@ export default class AuthLocalController {
         });
       }
     } catch (error) {
-      console.log('error', error);
       return res.status(status.UNAUTHORIZED).json({
         error: 'The credentials you provided are incorrect',
       });

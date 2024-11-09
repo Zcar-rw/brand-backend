@@ -246,7 +246,6 @@ export default class UserController {
     } = req.body;
     try {
       // GET USER ROLE
-      console.log('type', type);
       const role = await FindOne('Role', {
         name: type === 'business' ? 'cooperate-owner' : 'client',
       });
@@ -283,7 +282,6 @@ export default class UserController {
           },
         );
 
-        console.log('business', business);
         const customer = await Create('Customer', {
           companyId: business.id,
           userId: null,

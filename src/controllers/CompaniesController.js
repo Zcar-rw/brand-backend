@@ -49,7 +49,6 @@ export default class CompaniesController {
         response,
       });
     } catch (error) {
-      console.log('err', error);
       return res.status(status.BAD_REQUEST).send({
         error: 'companies not found at this moment, try again later',
       });

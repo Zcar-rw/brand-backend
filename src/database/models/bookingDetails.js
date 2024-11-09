@@ -1,6 +1,6 @@
 export default (sequelize, DataTypes) => {
-    const BookingDetails = sequelize.define(
-        'BookingDetails',
+    const BookingDetail = sequelize.define(
+        'BookingDetail',
         {
         id: {
             allowNull: false,
@@ -64,15 +64,16 @@ export default (sequelize, DataTypes) => {
         },
         {},
     );
-    BookingDetails.associate = (models) => {
-        BookingDetails.belongsTo(models.Booking, {
+    
+    BookingDetail.associate = (models) => {
+        BookingDetail.belongsTo(models.Booking, {
         foreignKey: 'bookingId',
         as: 'booking',
         });
-        BookingDetails.belongsTo(models.CarType, {
+        BookingDetail.belongsTo(models.CarType, {
         foreignKey: 'carType',
         as: 'car',
         });
     };
-    return BookingDetails;
+    return BookingDetail;
     }

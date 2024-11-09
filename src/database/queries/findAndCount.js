@@ -22,7 +22,6 @@ export default async (
     );
     return { response: response.rows, meta: { count: response.count || null } };
   } catch (error) {
-    console.log(error);
     return error;
   }
 };

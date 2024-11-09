@@ -22,7 +22,6 @@ export default class CarsController {
       createdBy: req.body.userId,
       plateNumber: req.body.plateNumber.toUpperCase(),
     };
-    console.log('data', data);
     // data.ownerId = req.user.user.id;
     // data.typeId = req.body.brandType;
     // data.carMakeId = req.body.brandName;
@@ -59,7 +58,6 @@ export default class CarsController {
             response,
           });
     } catch (error) {
-      console.log('err', error);
       return res.status(status.BAD_REQUEST).json();
     }
   }
@@ -272,7 +270,6 @@ export default class CarsController {
         response: response.rows,
       });
     } catch (error) {
-      console.log('error', error);
       return res.status(status.BAD_REQUEST).send({
         error: 'Cars not found at this moment, try again later',
       });
@@ -438,7 +435,6 @@ export default class CarsController {
         response,
       });
     } catch (error) {
-      console.log(error)
       return res.status(status.BAD_REQUEST).send({
         error: 'Cars not found at this moment, try again later',
       });

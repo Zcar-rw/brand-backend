@@ -75,6 +75,10 @@ const User = (sequelize, DataTypes) => {
       foreignKey: 'roleId',
       as: 'role',
     });
+    User.hasMany(models.Company, {
+      foreignKey: 'ownerId',
+      as: 'companies',
+    });
   };
   return User;
 };

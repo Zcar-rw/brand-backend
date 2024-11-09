@@ -72,8 +72,8 @@ export default (sequelize, DataTypes) => {
         allowNull: false,
       },
       status: {
-        type: DataTypes.ENUM('active', 'inactive'),
-        defaultValue: 'active',
+        type: DataTypes.ENUM('pending', 'approved', 'cancelled', 'completed'),
+        defaultValue: 'pending',
         allowNull: false,
       },
       createdAt: {
@@ -110,7 +110,10 @@ export default (sequelize, DataTypes) => {
       foreignKey: 'customerId',
       as: 'customer',
     });
+    Booking.hasOne(models.BookingDetail, {
+      foreignKey: 'bookingId',
+      as: 'bookingDetails',
+    });
   };
   return Booking;
 };
-

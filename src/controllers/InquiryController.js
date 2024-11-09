@@ -44,7 +44,6 @@ export default class InquiryController {
             response,
           });
     } catch (error) {
-      console.log('error', error);
       generateErrorResponse(error, res);
       return res.status(status.BAD_REQUEST).send({
         error: generateErrorResponse(error, res),
@@ -105,7 +104,6 @@ export default class InquiryController {
         response,
       });
     } catch (error) {
-      console.log('error', error);
       return res.status(status.BAD_REQUEST).send({
         error: 'companies not found at this moment, try again later',
       });
@@ -167,7 +165,6 @@ export default class InquiryController {
         response,
       });
     } catch (error) {
-      console.log('error', error);
       return res.status(status.BAD_REQUEST).send({
         error: 'companies not found at this moment, try again later',
       });

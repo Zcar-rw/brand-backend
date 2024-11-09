@@ -71,8 +71,8 @@ export default {
         type: Sequelize.STRING,
       },
       status: {
-        type: Sequelize.ENUM('active', 'inactive'),
-        defaultValue: 'active',
+        type: Sequelize.ENUM('pending', 'approved', 'cancelled', 'completed'),
+        defaultValue: 'pending',
         allowNull: true,
       },
       createdAt: {
