@@ -9,6 +9,7 @@ import {
   Update,
 } from '../database/queries';
 import moment from 'moment';
+import * as helper from '../helpers';
 
 export default class BookingController {
   static async createBooking(req, res) {
@@ -301,14 +302,12 @@ export default class BookingController {
               'Bookings can not be retrieved at this moment, try again later',
           })
         : res.status(status.OK).json({
-            response,
-            meta: {
-              count: meta.count,
+            meta: helper.generator.meta(
+              meta.count,
               limit,
-              page: parseInt(page, 10) || 1,
-              prev: page !== 1 ? page - 1 : 0,
-              next: page === meta.pages ? 0 : page + 1,
-            },
+              parseInt(page, 10) || 1,
+            ),
+            response,
           });
     } catch (error) {
       console.error('Bookings retrieval error:', error);
