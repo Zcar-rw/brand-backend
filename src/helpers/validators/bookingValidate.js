@@ -30,7 +30,7 @@ const schema = {
     service: Joi.string()
       .valid(...Object.values(ServiceEnum))
       .required(),
-    message: Joi.string().required(),
+    comment: Joi.string().required(),
   }),
   onBookingStatusUpdate: Joi.object({
     status: Joi.string()
@@ -46,7 +46,7 @@ const bookingValidations = {
     const { error } = schema.onBookingCreate.validate({
       // customerId: req.body.customerId,
       service: req.body.service,
-      message: req.body.message,
+      comment: req.body.comment,
       carType: req.body.carType,
       date: req.body.date,
       quantity: req.body.quantity,
@@ -78,7 +78,7 @@ const bookingValidations = {
   bookingInfoCreation(req, res, next) {
     const { error } = schema.onBookingInfoCreate.validate({
       service: req.body.info.service,
-      message: req.body.info.message,
+      comment: req.body.info.comment,
     });
     if (error) {
       return res.status(400).json({

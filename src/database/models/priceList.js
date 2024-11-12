@@ -1,6 +1,6 @@
 export default (sequelize, DataTypes) => {
-  const BookingDetail = sequelize.define(
-    'BookingDetail',
+  const PriceList = sequelize.define(
+    'PriceList',
     {
       id: {
         allowNull: false,
@@ -8,17 +8,17 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.UUID,
         defaultValue: DataTypes.UUIDV4,
       },
-      bookingId: {
+      companyId: {
         type: DataTypes.UUID,
         allowNull: false,
         references: {
-          model: 'Bookings',
+          model: 'Companies',
           key: 'id',
         },
         onUpdate: 'CASCADE',
-        onDelete: 'SET NULL',
+        onDelete: 'CASCADE',
       },
-      carType: {
+      carTypeId: {
         type: DataTypes.UUID,
         allowNull: false,
         references: {
@@ -26,32 +26,16 @@ export default (sequelize, DataTypes) => {
           key: 'id',
         },
         onUpdate: 'CASCADE',
-        onDelete: 'SET NULL',
+        onDelete: 'CASCADE',
       },
-      date: {
-        type: DataTypes.DATE,
+      class: {
+        type: DataTypes.STRING,
         allowNull: false,
       },
-      quantity: {
+      price: {
         type: DataTypes.INTEGER,
         allowNull: true,
         defaultValue: 1,
-      },
-      pickupLocation: {
-        type: DataTypes.STRING,
-        allowNull: false,
-      },
-      dropoffLocation: {
-        type: DataTypes.STRING,
-        allowNull: false,
-      },
-      pickupTime: {
-        type: DataTypes.TIME,
-        allowNull: false,
-      },
-      dropoffTime: {
-        type: DataTypes.TIME,
-        allowNull: false,
       },
       createdAt: {
         allowNull: false,
@@ -65,15 +49,16 @@ export default (sequelize, DataTypes) => {
     {},
   );
 
-  BookingDetail.associate = (models) => {
-    BookingDetail.belongsTo(models.Booking, {
-      foreignKey: 'bookingId',
-      as: 'booking',
+  PriceList.associate = (models) => {
+    PriceList.belongsTo(models.Company, {
+      foreignKey: 'companyId',
+      as: 'company',
     });
-    BookingDetail.belongsTo(models.CarType, {
-      foreignKey: 'carType',
+
+    PriceList.belongsTo(models.CarType, {
+      foreignKey: 'carTypeId',
       as: 'car',
     });
   };
-  return BookingDetail;
+  return PriceList;
 };

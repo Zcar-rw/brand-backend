@@ -50,6 +50,11 @@ export default (sequelize, DataTypes) => {
       onUpdate: 'CASCADE',
       onDelete: 'CASCADE',
     });
+    CarType.hasMany(models.PriceList, {
+      foreignKey: 'carTypeId',
+      as: 'priceLists',
+    });
+
   };
   return CarType;
 };

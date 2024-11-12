@@ -17,7 +17,7 @@ export default class BookingController {
       const {
         customerId,
         service,
-        message,
+        comment,
         carType,
         date,
         quantity,
@@ -40,7 +40,7 @@ export default class BookingController {
         createdBy: userId,
         customerId,
         service,
-        message,
+        comment,
         status: 'pending',
       });
 
@@ -130,20 +130,21 @@ export default class BookingController {
           dropoffTime,
         } = detail;
 
-        const { service, message } = info;
+        const { service, comment } = info;
 
         const enteredCarType = await FindOne('CarType', { id: carType });
-        if (!enteredCarType) {
-          return res.status(status.BAD_REQUEST).json({
-            status: 'error',
-            message: 'Car type not found',
-          });
+        if (!enteredCarType || Object.keys(enteredCarType)?.length === 0) {
+          // return res.status(status.BAD_REQUEST).json({
+          //   status: 'error',
+          //   message: 'Car type not found',
+          // });
+          throw new Error('Car type not found');
         }
         const newBooking = await Create('Booking', {
           createdBy: userId,
           customerId: user?.companies[0]?.customers[0]?.id,
           service,
-          message,
+          comment,
           status: 'pending',
         });
 
@@ -162,7 +163,7 @@ export default class BookingController {
             dropoffLocation,
             pickupTime,
             dropoffTime,
-          }).catch(async (err) => {
+          }).catch(async (_) => {
             await Delete('Booking', {
               id: newBooking.id,
             });
@@ -178,18 +179,20 @@ export default class BookingController {
           });
         })
         .catch((error) => {
-          console.error('Multiple bookings creation error:', error);
+          console.error('Multiple bookings creation error:', error.stack);
           return res.status(status.BAD_REQUEST).json({
             status: 'error',
-            message: 'An error occurred while creating the bookings.',
+            message:
+              error.message || 'An error occurred while creating the bookings.',
             data: error,
           });
         });
     } catch (error) {
-      console.error('Booking creation error:', error);
+      console.error('Booking creation error:', error.message);
       return res.status(status.INTERNAL_SERVER_ERROR).json({
         status: 'error',
-        message: 'An error occurred while creating the booking.',
+        message:
+          error.message || 'An error occurred while creating the booking.',
       });
     }
   }
@@ -246,6 +249,13 @@ export default class BookingController {
           model: db.Customer,
           as: 'customer',
           attributes: { exclude: ['createdAt', 'updatedAt'] },
+          include: [
+            {
+              model: db.Company,
+              as: 'company',
+              attributes: { exclude: ['createdAt', 'updatedAt'] },
+            },
+          ],
         },
         {
           model: db.User,

@@ -1,6 +1,9 @@
+'use strict';
+
+/** @type {import('sequelize-cli').Migration} */
 export default {
-  up: (queryInterface, Sequelize) =>
-    queryInterface.createTable('BookingDetails', {
+  up: async (queryInterface, Sequelize) =>
+    await queryInterface.createTable('BookingDetails', {
       id: {
         allowNull: false,
         primaryKey: true,
@@ -61,5 +64,7 @@ export default {
         type: Sequelize.DATE,
       },
     }),
-  down: (queryInterface) => queryInterface.dropTable('BookingDetails'),
+
+  down: async (queryInterface) =>
+    await queryInterface.dropTable('BookingDetails'),
 };
