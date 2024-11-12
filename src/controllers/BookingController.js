@@ -228,7 +228,7 @@ export default class BookingController {
           ],
         },
       ]);
-      if (!user) {
+      if (!user || Object.keys(user)?.length === 0) {
         return res.status(status.BAD_REQUEST).json({
           status: 'error',
           message: 'User not found',
@@ -273,6 +273,11 @@ export default class BookingController {
               attributes: { exclude: ['createdAt', 'updatedAt'] },
             },
           ],
+        },
+        {
+          model: db.Schedule,
+          as: 'schedule',
+          attributes: { exclude: ['createdAt', 'updatedAt'] },
         },
       ];
 

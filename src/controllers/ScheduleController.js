@@ -64,6 +64,11 @@ export default class ScheduleController {
             },
           ],
         },
+        {
+          model: db.Schedule,
+          as: 'schedule',
+          attributes: { exclude: ['createdAt', 'updatedAt'] },
+        },
       ]);
       if (!booking || Object.keys(booking).length === 0) {
         return res.status(status.BAD_REQUEST).json({
@@ -75,6 +80,12 @@ export default class ScheduleController {
         return res.status(status.BAD_REQUEST).json({
           status: 'error',
           message: 'Booking has not been approved by client',
+        });
+      }
+      if (booking?.schedule || Object.keys(booking?.schedule)) {
+        return res.status(status.BAD_REQUEST).json({
+          status: 'error',
+          message: 'Booking already has Schedule',
         });
       }
 
@@ -176,17 +187,110 @@ export default class ScheduleController {
       }
       const count = limit || 9;
       const offset = page === 1 ? 0 : (parseInt(page, 10) - 1) * count;
+      const { userId } = req.body;
+      const user = await FindOne('User', { id: userId }, [
+        {
+          model: db.Role,
+          as: 'role',
+          attributes: { exclude: ['createdAt', 'updatedAt'] },
+        },
+        {
+          model: db.Company,
+          as: 'companies',
+          attributes: { exclude: ['createdAt', 'updatedAt'] },
+          include: [
+            {
+              model: db.Customer,
+              as: 'customers',
+              attributes: { exclude: ['createdAt', 'updatedAt'] },
+            },
+          ],
+        },
+      ]);
+      if (!user || Object.keys(user)?.length === 0) {
+        return res.status(status.BAD_REQUEST).json({
+          status: 'error',
+          message: 'User not found',
+        });
+      }
 
+      let options = {};
+
+      if (user.role.name === 'admin') {
+        options = {};
+      } else if (
+        user.role.name === 'cooperate-owner' &&
+        (!user ||
+          !Array.isArray(user.companies) ||
+          user.companies.length === 0 ||
+          !Array.isArray(user.companies[0].customers) ||
+          user.companies[0].customers.length > 0)
+      ) {
+        options = {
+          customerId: user.companies[0].customers[0].id,
+        };
+      }
+
+      const include = [
+        {
+          model: db.Customer,
+          as: 'customer',
+          attributes: { exclude: ['createdAt', 'updatedAt'] },
+          include: [
+            {
+              model: db.Company,
+              as: 'company',
+              attributes: { exclude: ['createdAt', 'updatedAt'] },
+            },
+          ],
+        },
+        {
+          model: db.Booking,
+          as: 'booking',
+          attributes: { exclude: ['createdAt', 'updatedAt'] },
+          include: [
+            {
+              model: db.BookingDetail,
+              as: 'bookingDetails',
+              attributes: { exclude: ['createdAt', 'updatedAt'] },
+            },
+          ],
+        },
+        {
+          model: db.Car,
+          as: 'car',
+          attributes: { exclude: ['createdAt', 'updatedAt'] },
+          include: [
+            {
+              model: db.CarModel,
+              as: 'carModel',
+              attributes: { exclude: ['createdAt', 'updatedAt'] },
+              include: [
+                {
+                  model: db.CarType,
+                  as: 'carType',
+                  attributes: { exclude: ['createdAt', 'updatedAt'] },
+                },
+              ],
+            },
+          ],
+        },
+        {
+          model: db.PriceList,
+          as: 'priceList',
+          attributes: { exclude: ['createdAt', 'updatedAt'] },
+        },
+      ];
       const { response, meta } = await FindAndCount(
         'Schedule',
-        {},
-        [],
+        options,
+        include,
         limit,
         offset,
       );
       if (response && !response.length) {
         return res.status(status.NOT_FOUND).send({
-          error: 'Schedules not found',
+          error: 'No schedules found',
           response: [],
         });
       }
@@ -219,11 +323,6 @@ export default class ScheduleController {
         {
           model: db.Customer,
           as: 'customer',
-          attributes: { exclude: ['createdAt', 'updatedAt'] },
-        },
-        {
-          model: db.ScheduleDetail,
-          as: 'scheduleDetails',
           attributes: { exclude: ['createdAt', 'updatedAt'] },
         },
       ];
@@ -278,11 +377,22 @@ export default class ScheduleController {
     }
   }
 
-  static async updateSchedule(req, res) {
+  static async getScheduleByBookingid(req, res) {
     try {
       const { id } = req.params;
-      const { status: newStatus } = req.body;
-      const schedule = await FindOne('Schedule', { id });
+
+      const schedule = await FindOne('Schedule', { bookingId: id }, [
+        {
+          model: db.Car,
+          as: 'car',
+          attributes: { exclude: ['createdAt', 'updatedAt'] },
+        },
+        {
+          model: db.PriceList,
+          as: 'priceList',
+          attributes: { exclude: ['createdAt', 'updatedAt'] },
+        },
+      ]);
 
       if (!schedule) {
         return res.status(status.NOT_FOUND).json({
@@ -291,11 +401,32 @@ export default class ScheduleController {
         });
       }
 
-      const updatedSchedule = await Update(
-        'Schedule',
-        { status: newStatus },
-        { id },
-      );
+      return res.status(status.OK).json({
+        status: 'success',
+        message: 'Booking Schedule retrieved successfully',
+        data: schedule,
+      });
+    } catch (error) {
+      console.error('Schedule retrieval error:', error);
+      return res.status(status.INTERNAL_SERVER_ERROR).json({
+        status: 'error',
+        message: 'An error occurred while retrieving the schedule.',
+      });
+    }
+  }
+
+  static async updateSchedule(req, res) {
+    try {
+      const { id } = req.params;
+      const schedule = await FindOne('Schedule', { id });
+
+      if (!schedule || Object.keys(schedule).length === 0) {
+        return res.status(status.NOT_FOUND).json({
+          status: 'error',
+          message: 'Schedule not found',
+        });
+      }
+      const updatedSchedule = await Update('Schedule', { ...req.body }, { id });
 
       return res.status(status.OK).json({
         status: 'success',

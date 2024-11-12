@@ -228,7 +228,13 @@ export default class PriceListController {
     try {
       const { id } = req.params;
 
-      const priceLists = await FindAll('PriceList', { companyId: id });
+      const priceLists = await FindAll('PriceList', { companyId: id }, [
+        {
+          model: db.CarType,
+          as: 'car',
+          attributes: { exclude: ['createdAt', 'updatedAt'] },
+        },
+      ]);
 
       if (!priceLists || Object.keys(priceLists).length === 0) {
         return res.status(status.NOT_FOUND).json({

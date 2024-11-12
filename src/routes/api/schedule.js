@@ -20,5 +20,15 @@ router.get(
   verifyToken,
   asyncHandler(ScheduleController.getSchedulesByCustomer),
 );
+router.get(
+  '/booking/:id',
+  verifyToken,
+  asyncHandler(ScheduleController.getScheduleByBookingid),
+);
+router.patch(
+  '/update/:id',
+  verifyToken,
+  asyncHandler(ScheduleController.updateSchedule),
+);
 
 export default router;
