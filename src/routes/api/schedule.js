@@ -2,7 +2,7 @@ import express from 'express';
 import ScheduleController from '../../controllers/ScheduleController';
 import asyncHandler from '../../middlewares/asyncHandler';
 import { isAdmin, verifyToken } from '../../middlewares';
-// import scheduleValidations from '../../helpers/validators/scheduleValidate';
+import scheduleValidations from '../../helpers/validators/scheduleValidate.js';
 
 const router = express.Router();
 
@@ -10,7 +10,7 @@ router.post(
   '/create',
   verifyToken,
   isAdmin,
-  // scheduleValidations.scheduleCreation,
+  scheduleValidations.scheduleCreation,
   asyncHandler(ScheduleController.createSchedule),
 );
 router.get('/', verifyToken, asyncHandler(ScheduleController.getSchedules));

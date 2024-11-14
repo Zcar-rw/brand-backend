@@ -13,6 +13,7 @@ import inquiry from './inquiry';
 import booking from './booking';
 import priceList from './priceList';
 import schedule from './schedule';
+import invoice from './invoice';
 
 const router = express.Router();
 
@@ -30,5 +31,6 @@ router.use('/inquiry', inquiry);
 router.use('/booking', booking);
 router.use('/priceList', priceList);
 router.use('/schedule', schedule);
+router.use('/invoice', invoice);
 
 export default router;

@@ -1,4 +1,3 @@
-import { includes } from 'lodash';
 import status from '../config/status';
 import db from '../database/models';
 import {
@@ -82,7 +81,7 @@ export default class ScheduleController {
           message: 'Booking has not been approved by client',
         });
       }
-      if (booking?.schedule || Object.keys(booking?.schedule)) {
+      if (booking?.schedule && Object.keys(booking?.schedule)) {
         return res.status(status.BAD_REQUEST).json({
           status: 'error',
           message: 'Booking already has Schedule',
@@ -157,6 +156,12 @@ export default class ScheduleController {
         priceListId,
         amount,
         initialAmount: amount,
+        status: 'pending',
+      });
+
+      await Create('Invoice', {
+        customerId: schedule?.customerId,
+        bookingId: schedule?.bookingId,
         status: 'pending',
       });
 
