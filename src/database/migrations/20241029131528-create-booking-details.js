@@ -30,6 +30,11 @@ export default {
         onUpdate: 'CASCADE',
         onDelete: 'SET NULL',
       },
+      suggestedCarTypes: {
+        type: Sequelize.ARRAY(Sequelize.UUID),
+        defaultValue: [],
+        allowNull: true,
+      },
       date: {
         type: Sequelize.DATE,
         allowNull: false,

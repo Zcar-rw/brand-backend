@@ -45,6 +45,7 @@ export default async (message, subject, email, notification = {}) => {
       return;
     })
     .catch((err) => {
+      console.log(err)
       throw new Error(err.statusCode);
     });
 };

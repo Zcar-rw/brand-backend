@@ -44,6 +44,15 @@ export default {
         defaultValue: 'pending',
         allowNull: true,
       },
+      reviewStatus: {
+        type: Sequelize.ENUM('none', 'done', 'updated', 'denied'),
+        defaultValue: 'none',
+        allowNull: true,
+      },
+      price: {
+        type: Sequelize.DECIMAL(10, 2),
+        allowNull: true,
+      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE,

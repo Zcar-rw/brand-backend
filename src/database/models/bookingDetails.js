@@ -53,6 +53,11 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.TIME,
         allowNull: false,
       },
+      suggestedCarTypes: {
+        type: DataTypes.ARRAY(DataTypes.UUID),
+        defaultValue: [],
+        allowNull: true,
+      },
       createdAt: {
         allowNull: false,
         type: DataTypes.DATE,

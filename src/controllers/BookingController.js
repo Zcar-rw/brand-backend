@@ -10,7 +10,10 @@ import {
 } from '../database/queries';
 import moment from 'moment';
 import * as helper from '../helpers';
+import sendEmail from '../helpers/mailer';
+import dotenv from 'dotenv';
 
+dotenv.config();
 export default class BookingController {
   static async createBooking(req, res) {
     try {
@@ -42,6 +45,8 @@ export default class BookingController {
         service,
         comment,
         status: 'pending',
+        reviewStatus: 'none',
+        price: 0,
       });
 
       if (!booking) {
@@ -59,6 +64,7 @@ export default class BookingController {
           dropoffLocation,
           pickupTime,
           dropoffTime,
+          suggestedCarTypes: [],
         });
       }
       return res.status(status.CREATED).json({
@@ -341,10 +347,34 @@ export default class BookingController {
           model: db.Customer,
           as: 'customer',
           attributes: { exclude: ['createdAt', 'updatedAt'] },
+          include: [
+            {
+              model: db.Company,
+              as: 'company',
+              attributes: { exclude: ['createdAt', 'updatedAt'] },
+            },
+          ],
+        },
+        {
+          model: db.User,
+          as: 'user',
+          attributes: { exclude: ['createdAt', 'updatedAt'] },
         },
         {
           model: db.BookingDetail,
           as: 'bookingDetails',
+          attributes: { exclude: ['createdAt', 'updatedAt'] },
+          include: [
+            {
+              model: db.CarType,
+              as: 'car',
+              attributes: { exclude: ['createdAt', 'updatedAt'] },
+            },
+          ],
+        },
+        {
+          model: db.Schedule,
+          as: 'schedule',
           attributes: { exclude: ['createdAt', 'updatedAt'] },
         },
       ];
@@ -469,6 +499,216 @@ export default class BookingController {
       return res.status(status.INTERNAL_SERVER_ERROR).json({
         status: 'error',
         message: 'An error occurred while updating the booking.',
+      });
+    }
+  }
+
+  static async adminReviewBooking(req, res) {
+    try {
+      const { id } = req.params;
+      const { reviewStatus, price, suggestedCarTypes = [] } = req.body;
+
+      const include = [
+        {
+          model: db.Customer,
+          as: 'customer',
+          attributes: { exclude: ['createdAt', 'updatedAt'] },
+        },
+        {
+          model: db.User,
+          as: 'user',
+          attributes: { exclude: ['createdAt', 'updatedAt'] },
+        },
+        {
+          model: db.BookingDetail,
+          as: 'bookingDetails',
+          attributes: { exclude: ['createdAt', 'updatedAt'] },
+          include: [
+            {
+              model: db.CarType,
+              as: 'car',
+              attributes: { exclude: ['createdAt', 'updatedAt'] },
+            },
+          ],
+        },
+      ];
+      const booking = await FindOne('Booking', { id }, include);
+
+      if (!booking) {
+        return res.status(status.NOT_FOUND).json({
+          status: 'error',
+          message: 'Booking not found',
+        });
+      }
+      // if (booking.reviewStatus !== 'none') {
+      //   return res.status(status.BAD_REQUEST).json({
+      //     status: 'error',
+      //     message: 'Booking was already reviewed',
+      //   });
+      // }
+      if (
+        suggestedCarTypes.length > 0 &&
+        suggestedCarTypes.includes(booking?.bookingDetails?.car?.id)
+      ) {
+        return res.status(status.BAD_REQUEST).json({
+          status: 'error',
+          message: `The suggested car ${booking?.bookingDetails?.car?.name} is already selected for the booking`,
+        });
+      }
+
+      await Promise.all(
+        suggestedCarTypes.map(async (carType) => {
+          const enteredCarType = await FindOne('CarType', { id: carType });
+          if (!enteredCarType) {
+            throw new Error('Car type not found');
+          }
+        }),
+      );
+
+      if (reviewStatus === 'denied' && (price || price > 0)) {
+        return res.status(status.BAD_REQUEST).json({
+          status: 'error',
+          message: "Price can't be set for rejected bookings",
+        });
+      }
+
+      const updatedBooking = await Update(
+        'Booking',
+        { reviewStatus, price },
+        { id },
+      );
+      await Update('BookingDetail', { suggestedCarTypes }, { bookingId: id });
+
+      if (suggestedCarTypes.length > 0) {
+        const message = `Your booking has been reviewed. Please select a car type from the suggested car types`;
+        sendEmail(message, 'Booking Review', booking.user.email);
+      }
+      if (reviewStatus === 'denied') {
+        const message = `Your booking has been reviewed. The booking has been denied`;
+        sendEmail(message, 'Booking Review', booking.user.email);
+      }
+      if (reviewStatus === 'done') {
+        const message = `Your booking has been reviewed. The booking has been approved`;
+        sendEmail(message, 'Booking Review', booking.user.email);
+      }
+
+      return res.status(status.OK).json({
+        status: 'success',
+        message: 'Booking reviewed successfully',
+        data: updatedBooking,
+      });
+    } catch (error) {
+      console.error('Booking review error:', error);
+      return res.status(status.INTERNAL_SERVER_ERROR).json({
+        status: 'error',
+        message: 'An error occurred while reviewing the booking.',
+      });
+    }
+  }
+
+  static async clientReviewBooking(req, res) {
+    try {
+      const { id } = req.params;
+      const { status: newStatus } = req.body;
+
+      console.log({ id, newStatus });
+
+      const include = [
+        {
+          model: db.Customer,
+          as: 'customer',
+          attributes: { exclude: ['createdAt', 'updatedAt'] },
+          include: [
+            {
+              model: db.Company,
+              as: 'company',
+              attributes: { exclude: ['createdAt', 'updatedAt'] },
+            },
+          ],
+        },
+        {
+          model: db.User,
+          as: 'user',
+          attributes: { exclude: ['createdAt', 'updatedAt'] },
+        },
+        {
+          model: db.BookingDetail,
+          as: 'bookingDetails',
+          attributes: { exclude: ['createdAt', 'updatedAt'] },
+          include: [
+            {
+              model: db.CarType,
+              as: 'car',
+              attributes: { exclude: ['createdAt', 'updatedAt'] },
+            },
+          ],
+        },
+      ];
+      const booking = await FindOne('Booking', { id }, include);
+      if (!booking) {
+        return res.status(status.NOT_FOUND).json({
+          status: 'error',
+          message: 'Booking not found',
+        });
+      }
+
+      if (!booking.price || booking.price === 0) {
+        return res.status(status.BAD_REQUEST).json({
+          status: 'error',
+          message: 'Price must be set before approving the booking',
+        });
+      }
+
+      // if (booking.reviewStatus !== 'done') {
+      //   return res.status(status.BAD_REQUEST).json({
+      //     status: 'error',
+      //     message: 'Booking has not been reviewed by the admin',
+      //   });
+      // }
+
+      if (booking.status !== 'pending' && booking.status !== 'approved') {
+        return res.status(status.BAD_REQUEST).json({
+          status: 'error',
+          message: 'Booking has already been cancelled',
+        });
+      }
+
+      await Update('Booking', { status: newStatus }, { id });
+
+      if (newStatus === 'approved') {
+        const message = `Corporate Admin for ${
+          booking?.customer?.company?.name
+        } has approved their booking appontment which is due: <b>${moment(
+          booking?.bookingDetails?.date,
+        ).format('MMM DD, YYYY')}</b>`;
+        sendEmail(
+          message,
+          'Booking Review Status',
+          process.env.KALE_ADMIN_EMAIL,
+        );
+      }
+      if (newStatus === 'cancelled') {
+        const message = `Corporate Admin for ${
+          booking?.customer?.company?.name
+        } has cancelled their booking appontment which was due: <b>${moment(
+          booking?.bookingDetails?.date,
+        ).format('MMM DD, YYYY')}</b>`;
+        sendEmail(
+          message,
+          'Booking Review Status',
+          process.env.KALE_ADMIN_EMAIL,
+        );
+      }
+
+      return res.status(status.OK).json({
+        status: 'success',
+        message: 'Booking updated successfully',
+        data: booking,
+      });
+    } catch (error) {
+      return res.status(status.INTERNAL_SERVER_ERROR).json({
+        status: 'error',
+        message: 'An error occurred while reviewing the booking.',
       });
     }
   }

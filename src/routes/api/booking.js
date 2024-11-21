@@ -1,7 +1,7 @@
 import express from 'express';
 import BookingController from '../../controllers/BookingController';
 import asyncHandler from '../../middlewares/asyncHandler';
-import { verifyToken } from '../../middlewares';
+import { isAdmin, verifyToken } from '../../middlewares';
 import bookingValidations from '../../helpers/validators/bookingValidate';
 
 const router = express.Router();
@@ -36,6 +36,17 @@ router.patch(
   verifyToken,
   bookingValidations.bookingStatusUpdate,
   asyncHandler(BookingController.updateBooking),
+);
+router.patch(
+  '/:id/admin-review',
+  verifyToken,
+  isAdmin,
+  asyncHandler(BookingController.adminReviewBooking),
+);
+router.patch(
+  '/:id/client-review',
+  verifyToken,
+  asyncHandler(BookingController.clientReviewBooking),
 );
 
 export default router;
