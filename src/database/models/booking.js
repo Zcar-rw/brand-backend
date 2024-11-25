@@ -38,8 +38,15 @@ export default (sequelize, DataTypes) => {
         allowNull: false,
       },
       status: {
-        type: DataTypes.ENUM('pending', 'approved', 'cancelled', 'completed'),
-        defaultValue: 'pending',
+        type: DataTypes.ENUM(
+          'created', // company
+          'pending', // Kale
+          'approved', // company
+          'declined', // company
+          'cancelled', // company or Kale
+          'completed', // Invoice sent
+        ),
+        defaultValue: 'created',
         allowNull: false,
       },
       totalPrice: {

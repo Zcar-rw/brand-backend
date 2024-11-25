@@ -12,6 +12,7 @@ import moment from 'moment';
 import * as helper from '../helpers';
 import sendEmail from '../helpers/mailer';
 import dotenv from 'dotenv';
+import bookingStatus from '../config/bookingStatus';
 
 dotenv.config();
 export default class BookingController {
@@ -130,7 +131,7 @@ export default class BookingController {
         customerId: user?.companies[0]?.customers[0]?.id,
         service,
         comment,
-        status: 'pending',
+        status: 'created',
       });
       if (!newBooking) {
         return res.status(status.BAD_REQUEST).json({
@@ -518,7 +519,7 @@ export default class BookingController {
         { id },
       );
 
-      if (newStatus === 'reviewed') {
+      if (newStatus === bookingStatus.PENDING) {
         const message = `Your booking has been reviewed by Kale Admin. Please check your booking details for more information and to approve the booking.`;
         await sendEmail(message, 'Booking Review', booking.user.email);
       }
@@ -572,15 +573,9 @@ export default class BookingController {
           message: 'Booking not found',
         });
       }
-      console.log('##############');
-      console.log(body);
-      console.log('##############');
       const updatedBookingDetail = await Update('BookingDetail', body, {
         id,
       });
-      console.log('##############');
-      console.log(bookingDetail);
-      console.log('##############');
       return res.status(status.OK).json({
         status: 'success',
         message: 'Booking Detail Updated reviewed successfully',
@@ -727,9 +722,9 @@ export default class BookingController {
       }
 
       if (
+        booking.status !== 'created' &&
         booking.status !== 'pending' &&
-        booking.status !== 'approved' &&
-        booking.status !== 'reviewed'
+        booking.status !== 'approved'
       ) {
         return res.status(status.BAD_REQUEST).json({
           status: 'error',
@@ -739,7 +734,7 @@ export default class BookingController {
 
       await Update('Booking', { status: newStatus }, { id });
 
-      if (newStatus === 'approved') {
+      if (newStatus === bookingStatus.APPROVED) {
         const message = `Corporate Admin for ${
           booking?.customer?.company?.name
         } has approved their booking appontment which is due: <b>${moment(
@@ -751,10 +746,10 @@ export default class BookingController {
           process.env.KALE_ADMIN_EMAIL,
         );
       }
-      if (newStatus === 'cancelled') {
+      if (newStatus === bookingStatus.DECLINED) {
         const message = `Corporate Admin for ${
           booking?.customer?.company?.name
-        } has cancelled their booking appontment which was due: <b>${moment(
+        } has declined their booking appontment which was due: <b>${moment(
           booking?.bookingDetails?.date,
         ).format('MMM DD, YYYY')}</b>`;
         sendEmail(
