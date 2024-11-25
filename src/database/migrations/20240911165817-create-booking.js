@@ -40,17 +40,12 @@ export default {
         type: Sequelize.STRING,
       },
       status: {
-        type: Sequelize.ENUM('pending', 'approved', 'cancelled', 'completed'),
+        type: Sequelize.ENUM('pending', 'approved', 'cancelled', 'reviewed'),
         defaultValue: 'pending',
         allowNull: true,
       },
-      reviewStatus: {
-        type: Sequelize.ENUM('none', 'done', 'updated', 'denied'),
-        defaultValue: 'none',
-        allowNull: true,
-      },
-      price: {
-        type: Sequelize.DECIMAL(10, 2),
+      totalPrice: {
+        type: Sequelize.DECIMAL,
         allowNull: true,
       },
       createdAt: {

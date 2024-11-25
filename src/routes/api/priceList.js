@@ -20,5 +20,10 @@ router.get(
   verifyToken,
   asyncHandler(PriceListController.getPriceListsByCompany),
 );
+router.get(
+  '/company/:companyId/carType/:carTypeId',
+  verifyToken,
+  asyncHandler(PriceListController.getPriceListsByCompanyAndCarType),
+);
 
 export default router;

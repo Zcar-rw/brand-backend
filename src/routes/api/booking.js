@@ -19,6 +19,12 @@ router.post(
   bookingValidations.bookingInfoCreation,
   asyncHandler(BookingController.createMultipleBookings),
 );
+router.post(
+  '/create/details',
+  verifyToken,
+  // bookingValidations.bookingCreation,
+  asyncHandler(BookingController.createBookingDetail),
+);
 router.get('/', verifyToken, asyncHandler(BookingController.getBookings));
 router.get('/:id', asyncHandler(BookingController.getBooking));
 router.get(
@@ -32,16 +38,21 @@ router.get(
   asyncHandler(BookingController.getBookingByCompany),
 );
 router.patch(
-  '/:id/update',
+  '/details/:id/admin-review',
   verifyToken,
-  bookingValidations.bookingStatusUpdate,
-  asyncHandler(BookingController.updateBooking),
+  isAdmin,
+  asyncHandler(BookingController.adminReviewBookingDetails),
 );
 router.patch(
   '/:id/admin-review',
   verifyToken,
+  asyncHandler(BookingController.submitAdminReview),
+);
+router.delete(
+  '/details/:id/delete',
+  verifyToken,
   isAdmin,
-  asyncHandler(BookingController.adminReviewBooking),
+  asyncHandler(BookingController.deleteBookingDetail),
 );
 router.patch(
   '/:id/client-review',

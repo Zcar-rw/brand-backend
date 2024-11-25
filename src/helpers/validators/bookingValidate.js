@@ -16,7 +16,7 @@ const schema = {
   onBookingCreate: Joi.object({
     carType: Joi.string().uuid().required(),
     date: Joi.date().required(),
-    quantity: Joi.number().optional(),
+    // quantity: Joi.number().optional(),
     pickupLocation: Joi.string().required(),
     dropoffLocation: Joi.string().required(),
     pickupTime: Joi.string()
@@ -49,7 +49,7 @@ const bookingValidations = {
       comment: req.body.comment,
       carType: req.body.carType,
       date: req.body.date,
-      quantity: req.body.quantity,
+      // quantity: req.body.quantity,
       pickupLocation: req.body.pickupLocation,
       dropoffLocation: req.body.dropoffLocation,
       pickupTime: req.body.pickupTime,

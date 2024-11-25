@@ -18,7 +18,7 @@ export default {
           key: 'id',
         },
         onUpdate: 'CASCADE',
-        onDelete: 'SET NULL',
+        onDelete: 'CASCADE',
       },
       carType: {
         type: Sequelize.UUID,
@@ -28,21 +28,11 @@ export default {
           key: 'id',
         },
         onUpdate: 'CASCADE',
-        onDelete: 'SET NULL',
-      },
-      suggestedCarTypes: {
-        type: Sequelize.ARRAY(Sequelize.UUID),
-        defaultValue: [],
-        allowNull: true,
+        onDelete: 'CASCADE',
       },
       date: {
         type: Sequelize.DATE,
         allowNull: false,
-      },
-      quantity: {
-        type: Sequelize.INTEGER,
-        allowNull: true,
-        defaultValue: 1,
       },
       pickupLocation: {
         type: Sequelize.STRING,
@@ -59,6 +49,10 @@ export default {
       dropoffTime: {
         type: Sequelize.TIME,
         allowNull: false,
+      },
+      price: {
+        type: Sequelize.DECIMAL,
+        allowNull: true,
       },
       createdAt: {
         allowNull: false,

@@ -256,4 +256,38 @@ export default class PriceListController {
       });
     }
   }
+
+  static async getPriceListsByCompanyAndCarType(req, res) {
+    try {
+      const { companyId, carTypeId } = req.params;
+      console.log(carTypeId)
+
+      const priceLists = await FindAll('PriceList', { companyId, carTypeId }, [
+        {
+          model: db.CarType,
+          as: 'car',
+          attributes: { exclude: ['createdAt', 'updatedAt'] },
+        },
+      ]);
+
+      if (!priceLists || Object.keys(priceLists).length === 0) {
+        return res.status(status.NOT_FOUND).json({
+          status: 'error',
+          message: 'PriceLists not found',
+        });
+      }
+
+      return res.status(status.OK).json({
+        status: 'success',
+        message: 'PriceLists retrieved successfully',
+        data: priceLists?.response,
+      });
+    } catch (error) {
+      console.error('PriceLists retrieval error:', error);
+      return res.status(status.INTERNAL_SERVER_ERROR).json({
+        status: 'error',
+        message: 'An error occurred while retrieving priceLists.',
+      });
+    }
+  }
 }
