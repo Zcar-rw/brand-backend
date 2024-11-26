@@ -32,11 +32,6 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.DATE,
         allowNull: false,
       },
-      quantity: {
-        type: DataTypes.INTEGER,
-        allowNull: true,
-        defaultValue: 1,
-      },
       pickupLocation: {
         type: DataTypes.STRING,
         allowNull: false,
@@ -53,9 +48,8 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.TIME,
         allowNull: false,
       },
-      suggestedCarTypes: {
-        type: DataTypes.ARRAY(DataTypes.UUID),
-        defaultValue: [],
+      price: {
+        type: DataTypes.DECIMAL,
         allowNull: true,
       },
       createdAt: {

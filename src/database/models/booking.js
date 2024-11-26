@@ -38,17 +38,19 @@ export default (sequelize, DataTypes) => {
         allowNull: false,
       },
       status: {
-        type: DataTypes.ENUM('pending', 'approved', 'cancelled', 'completed'),
-        defaultValue: 'pending',
+        type: DataTypes.ENUM(
+          'created', // company
+          'pending', // Kale
+          'approved', // company
+          'declined', // company
+          'cancelled', // company or Kale
+          'completed', // Invoice sent
+        ),
+        defaultValue: 'created',
         allowNull: false,
       },
-      reviewStatus: {
-        type: DataTypes.ENUM('none', 'done', 'updated', 'denied'),
-        defaultValue: 'none',
-        allowNull: true,
-      },
-      price: {
-        type: DataTypes.DECIMAL(10, 2),
+      totalPrice: {
+        type: DataTypes.DECIMAL,
         allowNull: true,
       },
       createdAt: {
@@ -72,7 +74,7 @@ export default (sequelize, DataTypes) => {
       foreignKey: 'customerId',
       as: 'customer',
     });
-    Booking.hasOne(models.BookingDetail, {
+    Booking.hasMany(models.BookingDetail, {
       foreignKey: 'bookingId',
       as: 'bookingDetails',
     });

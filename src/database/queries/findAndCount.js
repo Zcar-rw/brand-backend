@@ -6,21 +6,23 @@ export default async (
   include = null,
   limit,
   offset,
-  order
+  order,
 ) => {
   order = order || [['createdAt', 'DESC']];
   try {
-    const response = await db[Model].findAndCountAll(
-      {
-        where: condition,
-        include,
-        order,
-        limit,
-        offset,
-      },
-      { logging: false, raw: true }
-    );
-    return { response: response.rows, meta: { count: response.count || null } };
+    const count = await db[Model].count({
+      where: condition,
+    });
+
+    const rows = await db[Model].findAll({
+      where: condition,
+      include,
+      order,
+      limit,
+      offset,
+    });
+
+    return { response: rows, meta: { count } };
   } catch (error) {
     return error;
   }

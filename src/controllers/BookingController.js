@@ -12,6 +12,7 @@ import moment from 'moment';
 import * as helper from '../helpers';
 import sendEmail from '../helpers/mailer';
 import dotenv from 'dotenv';
+import bookingStatus from '../config/bookingStatus';
 
 dotenv.config();
 export default class BookingController {
@@ -45,7 +46,7 @@ export default class BookingController {
         service,
         comment,
         status: 'pending',
-        reviewStatus: 'none',
+        // reviewStatus: 'none',
         price: 0,
       });
 
@@ -124,47 +125,43 @@ export default class BookingController {
           message: 'Customer not found',
         });
       }
-      const bookingPromises = details.map(async (detail) => {
-        const {
-          // customerId,
-          carType,
-          date,
-          quantity,
-          pickupLocation,
-          dropoffLocation,
-          pickupTime,
-          dropoffTime,
-        } = detail;
-
-        const { service, comment } = info;
-
-        const enteredCarType = await FindOne('CarType', { id: carType });
-        if (!enteredCarType || Object.keys(enteredCarType)?.length === 0) {
-          // return res.status(status.BAD_REQUEST).json({
-          //   status: 'error',
-          //   message: 'Car type not found',
-          // });
-          throw new Error('Car type not found');
-        }
-        const newBooking = await Create('Booking', {
-          createdBy: userId,
-          customerId: user?.companies[0]?.customers[0]?.id,
-          service,
-          comment,
-          status: 'pending',
+      const { service, comment } = info;
+      const newBooking = await Create('Booking', {
+        createdBy: userId,
+        customerId: user?.companies[0]?.customers[0]?.id,
+        service,
+        comment,
+        status: 'created',
+      });
+      if (!newBooking) {
+        return res.status(status.BAD_REQUEST).json({
+          status: 'error',
+          message: 'Booking creation failed',
         });
+      } else {
+        const bookingPromises = details.map(async (detail) => {
+          const {
+            // customerId,
+            carType,
+            date,
+            pickupLocation,
+            dropoffLocation,
+            pickupTime,
+            dropoffTime,
+          } = detail;
 
-        if (!newBooking) {
-          return res.status(status.BAD_REQUEST).json({
-            status: 'error',
-            message: 'Booking creation failed',
-          });
-        } else {
+          const enteredCarType = await FindOne('CarType', { id: carType });
+          if (!enteredCarType || Object.keys(enteredCarType)?.length === 0) {
+            // return res.status(status.BAD_REQUEST).json({
+            //   status: 'error',
+            //   message: 'Car type not found',
+            // });
+            throw new Error('Car type not found');
+          }
           await Create('BookingDetail', {
             bookingId: newBooking.id,
             carType,
             date: moment(date).format('YYYY-MM-DD HH:mm:ss'),
-            quantity,
             pickupLocation,
             dropoffLocation,
             pickupTime,
@@ -173,26 +170,28 @@ export default class BookingController {
             await Delete('Booking', {
               id: newBooking.id,
             });
-          });
-        }
-      });
-
-      Promise.all(bookingPromises)
-        .then(() => {
-          return res.status(status.CREATED).json({
-            status: 'success',
-            message: 'Bookings created successfully',
-          });
-        })
-        .catch((error) => {
-          console.error('Multiple bookings creation error:', error.stack);
-          return res.status(status.BAD_REQUEST).json({
-            status: 'error',
-            message:
-              error.message || 'An error occurred while creating the bookings.',
-            data: error,
+            throw new Error('Booking detail creation failed');
           });
         });
+
+        Promise.all(bookingPromises)
+          .then(() => {
+            return res.status(status.CREATED).json({
+              status: 'success',
+              message: 'Bookings created successfully',
+            });
+          })
+          .catch((error) => {
+            console.error('Multiple bookings creation error:', error.stack);
+            return res.status(status.BAD_REQUEST).json({
+              status: 'error',
+              message:
+                error.message ||
+                'An error occurred while creating the bookings.',
+              data: error,
+            });
+          });
+      }
     } catch (error) {
       console.error('Booking creation error:', error.message);
       return res.status(status.INTERNAL_SERVER_ERROR).json({
@@ -470,49 +469,23 @@ export default class BookingController {
     }
   }
 
-  static async updateBooking(req, res) {
+  static async submitAdminReview(req, res) {
     try {
       const { id } = req.params;
       const { status: newStatus } = req.body;
-      const booking = await FindOne('Booking', { id });
-
-      if (!booking) {
-        return res.status(status.NOT_FOUND).json({
-          status: 'error',
-          message: 'Booking not found',
-        });
-      }
-
-      const updatedBooking = await Update(
-        'Booking',
-        { status: newStatus },
-        { id },
-      );
-
-      return res.status(status.OK).json({
-        status: 'success',
-        message: 'Booking updated successfully',
-        data: updatedBooking,
-      });
-    } catch (error) {
-      console.error('Booking update error:', error);
-      return res.status(status.INTERNAL_SERVER_ERROR).json({
-        status: 'error',
-        message: 'An error occurred while updating the booking.',
-      });
-    }
-  }
-
-  static async adminReviewBooking(req, res) {
-    try {
-      const { id } = req.params;
-      const { reviewStatus, price, suggestedCarTypes = [] } = req.body;
 
       const include = [
         {
           model: db.Customer,
           as: 'customer',
           attributes: { exclude: ['createdAt', 'updatedAt'] },
+          include: [
+            {
+              model: db.Company,
+              as: 'company',
+              attributes: { exclude: ['createdAt', 'updatedAt'] },
+            },
+          ],
         },
         {
           model: db.User,
@@ -533,68 +506,31 @@ export default class BookingController {
         },
       ];
       const booking = await FindOne('Booking', { id }, include);
-
-      if (!booking) {
+      if (!booking || Object.keys(booking)?.length === 0) {
         return res.status(status.NOT_FOUND).json({
           status: 'error',
           message: 'Booking not found',
         });
       }
-      // if (booking.reviewStatus !== 'none') {
-      //   return res.status(status.BAD_REQUEST).json({
-      //     status: 'error',
-      //     message: 'Booking was already reviewed',
-      //   });
-      // }
-      if (
-        suggestedCarTypes.length > 0 &&
-        suggestedCarTypes.includes(booking?.bookingDetails?.car?.id)
-      ) {
-        return res.status(status.BAD_REQUEST).json({
-          status: 'error',
-          message: `The suggested car ${booking?.bookingDetails?.car?.name} is already selected for the booking`,
-        });
-      }
-
-      await Promise.all(
-        suggestedCarTypes.map(async (carType) => {
-          const enteredCarType = await FindOne('CarType', { id: carType });
-          if (!enteredCarType) {
-            throw new Error('Car type not found');
-          }
-        }),
-      );
-
-      if (reviewStatus === 'denied' && (price || price > 0)) {
-        return res.status(status.BAD_REQUEST).json({
-          status: 'error',
-          message: "Price can't be set for rejected bookings",
-        });
-      }
 
       const updatedBooking = await Update(
         'Booking',
-        { reviewStatus, price },
+        { status: newStatus },
         { id },
       );
-      await Update('BookingDetail', { suggestedCarTypes }, { bookingId: id });
 
-      if (suggestedCarTypes.length > 0) {
-        const message = `Your booking has been reviewed. Please select a car type from the suggested car types`;
-        sendEmail(message, 'Booking Review', booking.user.email);
+      if (newStatus === bookingStatus.PENDING) {
+        const message = `Your booking has been reviewed by Kale Admin. Please check your booking details for more information and to approve the booking.`;
+        await sendEmail(message, 'Booking Review', booking.user.email);
       }
-      if (reviewStatus === 'denied') {
-        const message = `Your booking has been reviewed. The booking has been denied`;
-        sendEmail(message, 'Booking Review', booking.user.email);
-      }
-      if (reviewStatus === 'done') {
-        const message = `Your booking has been reviewed. The booking has been approved`;
-        sendEmail(message, 'Booking Review', booking.user.email);
+      if (newStatus === bookingStatus.CANCELLED) {
+        const message = `Your booking has been approved by Kale Admin. Please check your booking details for more information.`;
+        await sendEmail(message, 'Booking Review', booking.user.email);
       }
 
       return res.status(status.OK).json({
         status: 'success',
-        message: 'Booking reviewed successfully',
+        message: 'Review submitted for Approval',
         data: updatedBooking,
       });
     } catch (error) {
@@ -606,12 +542,149 @@ export default class BookingController {
     }
   }
 
+  static async adminReviewBookingDetails(req, res) {
+    try {
+      const { id } = req.params;
+      const { userId, ...body } = req.body;
+
+      const include = [
+        {
+          model: db.Booking,
+          as: 'booking',
+          attributes: { exclude: ['createdAt', 'updatedAt'] },
+        },
+        {
+          model: db.CarType,
+          as: 'car',
+          attributes: { exclude: ['createdAt', 'updatedAt'] },
+        },
+      ];
+
+      const bookingDetail = await FindOne('BookingDetail', { id }, include);
+
+      if (!bookingDetail || Object.keys(bookingDetail)?.length === 0) {
+        return res.status(status.NOT_FOUND).json({
+          status: 'error',
+          message: 'Booking detail not found',
+        });
+      }
+      const booking = await FindOne('Booking', {
+        id: bookingDetail.bookingId,
+      });
+      if (!booking || Object.keys(booking)?.length === 0) {
+        return res.status(status.NOT_FOUND).json({
+          status: 'error',
+          message: 'Booking not found',
+        });
+      }
+      const updatedBookingDetail = await Update('BookingDetail', body, {
+        id,
+      });
+      return res.status(status.OK).json({
+        status: 'success',
+        message: 'Booking Detail Updated reviewed successfully',
+        data: updatedBookingDetail,
+      });
+    } catch (error) {
+      console.error('Booking review error:', error);
+      return res.status(status.INTERNAL_SERVER_ERROR).json({
+        status: 'error',
+        message: 'An error occurred while reviewing the booking.',
+      });
+    }
+  }
+
+  static async deleteBookingDetail(req, res) {
+    try {
+      const { id } = req.params;
+      const bookingDetail = await FindOne('BookingDetail', { id });
+
+      if (!bookingDetail || Object.keys(bookingDetail)?.length === 0) {
+        return res.status(status.NOT_FOUND).json({
+          status: 'error',
+          message: 'Booking detail not found',
+        });
+      }
+
+      await Delete('BookingDetail', { id });
+
+      return res.status(status.OK).json({
+        status: 'success',
+        message: 'Booking detail deleted successfully',
+      });
+    } catch (error) {
+      console.error('Booking detail deletion error:', error);
+      return res.status(status.INTERNAL_SERVER_ERROR).json({
+        status: 'error',
+        message: 'An error occurred while deleting the booking detail.',
+      });
+    }
+  }
+
+  static async createBookingDetail(req, res) {
+    try {
+      const {
+        bookingId,
+        carType,
+        date,
+        pickupLocation,
+        dropoffLocation,
+        pickupTime,
+        dropoffTime,
+        price,
+      } = req.body;
+
+      const enteredCarType = await FindOne('CarType', { id: carType });
+      if (!enteredCarType || Object.keys(enteredCarType)?.length === 0) {
+        return res.status(status.BAD_REQUEST).json({
+          status: 'error',
+          message: 'Car type not found',
+        });
+      }
+      const booking = await FindOne('Booking', { id: bookingId });
+      if (!booking || Object.keys(booking)?.length === 0) {
+        return res.status(status.NOT_FOUND).json({
+          status: 'error',
+          message: 'Booking not found',
+        });
+      }
+
+      const bookingDetail = await Create('BookingDetail', {
+        bookingId,
+        carType,
+        date,
+        pickupLocation,
+        dropoffLocation,
+        pickupTime,
+        dropoffTime,
+        price,
+      });
+
+      if (!bookingDetail) {
+        return res.status(status.BAD_REQUEST).json({
+          status: 'error',
+          message: 'Booking detail creation failed',
+        });
+      }
+
+      return res.status(status.CREATED).json({
+        status: 'success',
+        message: 'Booking detail created successfully',
+        data: bookingDetail,
+      });
+    } catch (error) {
+      console.error('Booking detail creation error:', error);
+      return res.status(status.INTERNAL_SERVER_ERROR).json({
+        status: 'error',
+        message: 'An error occurred while creating the booking detail.',
+      });
+    }
+  }
+
   static async clientReviewBooking(req, res) {
     try {
       const { id } = req.params;
       const { status: newStatus } = req.body;
-
-      console.log({ id, newStatus });
 
       const include = [
         {
@@ -652,21 +725,11 @@ export default class BookingController {
         });
       }
 
-      if (!booking.price || booking.price === 0) {
-        return res.status(status.BAD_REQUEST).json({
-          status: 'error',
-          message: 'Price must be set before approving the booking',
-        });
-      }
-
-      // if (booking.reviewStatus !== 'done') {
-      //   return res.status(status.BAD_REQUEST).json({
-      //     status: 'error',
-      //     message: 'Booking has not been reviewed by the admin',
-      //   });
-      // }
-
-      if (booking.status !== 'pending' && booking.status !== 'approved') {
+      if (
+        booking.status !== 'created' &&
+        booking.status !== 'pending' &&
+        booking.status !== 'approved'
+      ) {
         return res.status(status.BAD_REQUEST).json({
           status: 'error',
           message: 'Booking has already been cancelled',
@@ -675,7 +738,7 @@ export default class BookingController {
 
       await Update('Booking', { status: newStatus }, { id });
 
-      if (newStatus === 'approved') {
+      if (newStatus === bookingStatus.APPROVED) {
         const message = `Corporate Admin for ${
           booking?.customer?.company?.name
         } has approved their booking appontment which is due: <b>${moment(
@@ -687,7 +750,19 @@ export default class BookingController {
           process.env.KALE_ADMIN_EMAIL,
         );
       }
-      if (newStatus === 'cancelled') {
+      if (newStatus === bookingStatus.DECLINED) {
+        const message = `Corporate Admin for ${
+          booking?.customer?.company?.name
+        } has declined their booking appontment which was due: <b>${moment(
+          booking?.bookingDetails?.date,
+        ).format('MMM DD, YYYY')}</b>`;
+        sendEmail(
+          message,
+          'Booking Review Status',
+          process.env.KALE_ADMIN_EMAIL,
+        );
+      }
+      if (newStatus === bookingStatus.CANCELLED) {
         const message = `Corporate Admin for ${
           booking?.customer?.company?.name
         } has cancelled their booking appontment which was due: <b>${moment(
