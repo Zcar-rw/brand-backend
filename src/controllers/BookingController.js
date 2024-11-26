@@ -523,6 +523,10 @@ export default class BookingController {
         const message = `Your booking has been reviewed by Kale Admin. Please check your booking details for more information and to approve the booking.`;
         await sendEmail(message, 'Booking Review', booking.user.email);
       }
+      if (newStatus === bookingStatus.CANCELLED) {
+        const message = `Your booking has been approved by Kale Admin. Please check your booking details for more information.`;
+        await sendEmail(message, 'Booking Review', booking.user.email);
+      }
 
       return res.status(status.OK).json({
         status: 'success',
@@ -750,6 +754,18 @@ export default class BookingController {
         const message = `Corporate Admin for ${
           booking?.customer?.company?.name
         } has declined their booking appontment which was due: <b>${moment(
+          booking?.bookingDetails?.date,
+        ).format('MMM DD, YYYY')}</b>`;
+        sendEmail(
+          message,
+          'Booking Review Status',
+          process.env.KALE_ADMIN_EMAIL,
+        );
+      }
+      if (newStatus === bookingStatus.CANCELLED) {
+        const message = `Corporate Admin for ${
+          booking?.customer?.company?.name
+        } has cancelled their booking appontment which was due: <b>${moment(
           booking?.bookingDetails?.date,
         ).format('MMM DD, YYYY')}</b>`;
         sendEmail(
