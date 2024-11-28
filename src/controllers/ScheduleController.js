@@ -1,5 +1,6 @@
 import status from '../config/status';
 import db from '../database/models';
+import bookingDetails from '../database/models/bookingDetails';
 import {
   Create,
   FindAll,
@@ -14,14 +15,14 @@ export default class ScheduleController {
     try {
       const {
         userId, // createdBy
-        bookingId,
+        bookingDetailId,
         carId, // Selected
         // customerId, // From Booking
-        // driverId, // Later
+        driverId,
         // createdBy, // userId
-        priceListId,
-        // status, // Later
-        amount,
+        // priceListId,
+        // status, // Default: created
+        // amount,
         // initialAmount, // From Company Schedule & CarType (Would need class to determine the real amount)
       } = req.body;
 
@@ -32,59 +33,102 @@ export default class ScheduleController {
           message: 'User not found',
         });
       }
-
-      const booking = await FindOne('Booking', { id: bookingId }, [
+      const driver = await FindOne('User', { id: driverId }, [
         {
-          model: db.Customer,
-          as: 'customer',
-          attributes: { exclude: ['createdAt', 'updatedAt'] },
-          include: [
-            {
-              model: db.Company,
-              as: 'company',
-              attributes: { exclude: ['createdAt', 'updatedAt'] },
-            },
-          ],
-        },
-        {
-          model: db.User,
-          as: 'user',
-          attributes: { exclude: ['createdAt', 'updatedAt'] },
-        },
-        {
-          model: db.BookingDetail,
-          as: 'bookingDetails',
-          attributes: { exclude: ['createdAt', 'updatedAt'] },
-          include: [
-            {
-              model: db.CarType,
-              as: 'car',
-              attributes: { exclude: ['createdAt', 'updatedAt'] },
-            },
-          ],
-        },
-        {
-          model: db.Schedule,
-          as: 'schedule',
+          model: db.Role,
+          as: 'role',
           attributes: { exclude: ['createdAt', 'updatedAt'] },
         },
       ]);
-      if (!booking || Object.keys(booking).length === 0) {
+      if (!driver || Object.keys(driver).length === 0) {
+        return res.status(status.BAD_REQUEST).json({
+          status: 'error',
+          message: 'Driver not found',
+        });
+      }
+      if (driver?.role?.name !== 'driver') {
+        return res.status(status.BAD_REQUEST).json({
+          status: 'error',
+          message: 'Selected user must be a driver',
+        });
+      }
+
+      const bookingDetail = await FindOne(
+        'BookingDetail',
+        { id: bookingDetailId },
+        [
+          {
+            model: db.Booking,
+            as: 'booking',
+            attributes: { exclude: ['createdAt', 'updatedAt'] },
+            include: [
+              {
+                model: db.Customer,
+                as: 'customer',
+                attributes: { exclude: ['createdAt', 'updatedAt'] },
+                // include: [
+                //   {
+                //     model: db.Company,
+                //     as: 'company',
+                //     attributes: { exclude: ['createdAt', 'updatedAt'] },
+                //   },
+                // ],
+              },
+            ],
+          },
+          // {
+          //   model: db.Customer,
+          //   as: 'customer',
+          //   attributes: { exclude: ['createdAt', 'updatedAt'] },
+          //   include: [
+          //     {
+          //       model: db.Company,
+          //       as: 'company',
+          //       attributes: { exclude: ['createdAt', 'updatedAt'] },
+          //     },
+          //   ],
+          // },
+          // {
+          //   model: db.User,
+          //   as: 'user',
+          //   attributes: { exclude: ['createdAt', 'updatedAt'] },
+          // },
+          // {
+          //   model: db.BookingDetail,
+          //   as: 'bookingDetails',
+          //   attributes: { exclude: ['createdAt', 'updatedAt'] },
+          //   include: [
+          //     {
+          //       model: db.CarType,
+          //       as: 'car',
+          //       attributes: { exclude: ['createdAt', 'updatedAt'] },
+          //     },
+          //   ],
+          // },
+          {
+            model: db.Schedule,
+            as: 'schedule',
+            attributes: { exclude: ['createdAt', 'updatedAt'] },
+          },
+        ],
+      );
+      if (!bookingDetail || Object.keys(bookingDetail).length === 0) {
         return res.status(status.BAD_REQUEST).json({
           status: 'error',
           message: 'Booking not found',
         });
       }
-      if (booking?.status !== 'approved') {
-        return res.status(status.BAD_REQUEST).json({
-          status: 'error',
-          message: 'Booking has not been approved by client',
-        });
-      }
-      if (booking?.schedule && Object.keys(booking?.schedule)) {
+      if (bookingDetail?.schedule) {
         return res.status(status.BAD_REQUEST).json({
           status: 'error',
           message: 'Booking already has Schedule',
+        });
+      }
+      const { booking } = bookingDetail;
+      if (booking?.status !== 'approved') {
+        return res.status(status.BAD_REQUEST).json({
+          status: 'error',
+          message: 'Booking has not yet been approved',
         });
       }
 
@@ -108,62 +152,27 @@ export default class ScheduleController {
           message: 'Car not found',
         });
       }
-      if (booking?.bookingDetails?.carType !== car?.carModel?.typeId) {
+      if (bookingDetail?.carType !== car?.carModel?.typeId) {
         return res.status(status.BAD_REQUEST).json({
           status: 'error',
-          message:
-            "The selected car's type does not match the client's selection",
-        });
-      }
-      const pricing = await FindOne('PriceList', {
-        companyId: booking?.customer?.company?.id,
-        carTypeId: car?.carModel?.typeId,
-      });
-      if (!pricing || Object.keys(pricing).length === 0) {
-        return res.status(status.NOT_FOUND).json({
-          status: 'error',
-          message: "No pricing list found for this company's selected car type",
-        });
-      }
-      const priceList = await FindOne('PriceList', {
-        id: priceListId,
-      });
-      if (!priceList || Object.keys(priceList).length === 0) {
-        return res.status(status.BAD_REQUEST).json({
-          status: 'error',
-          message: 'Price list not found',
-        });
-      }
-      if (priceList?.carTypeId !== car?.carModel?.typeId) {
-        return res.status(status.BAD_REQUEST).json({
-          status: 'error',
-          message: 'Price list does not match the selected car type',
-        });
-      }
-      if (priceList?.companyId !== booking?.customer?.companyId) {
-        return res.status(status.BAD_REQUEST).json({
-          status: 'error',
-          message: 'Price list does not match the selected company',
+          message: "The selected car's type does not match the client's choice",
         });
       }
 
       const schedule = await Create('Schedule', {
         customerId: booking?.customerId,
-        bookingId,
+        bookingDetailId,
         carId,
-        driverId: null,
+        driverId,
         createdBy: userId,
-        priceListId,
-        amount,
-        initialAmount: amount,
-        status: 'pending',
+        status: 'created',
       });
 
-      await Create('Invoice', {
-        customerId: schedule?.customerId,
-        bookingId: schedule?.bookingId,
-        status: 'pending',
-      });
+      // await Create('Invoice', {
+      //   customerId: schedule?.customerId,
+      //   bookingId: schedule?.bookingId,
+      //   status: 'pending',
+      // });
 
       return res.status(status.CREATED).json({
         status: 'success',
@@ -238,6 +247,11 @@ export default class ScheduleController {
 
       const include = [
         {
+          model: db.User,
+          as: 'driver',
+          attributes: { exclude: ['createdAt', 'updatedAt'] },
+        },
+        {
           model: db.Customer,
           as: 'customer',
           attributes: { exclude: ['createdAt', 'updatedAt'] },
@@ -250,13 +264,13 @@ export default class ScheduleController {
           ],
         },
         {
-          model: db.Booking,
-          as: 'booking',
+          model: db.BookingDetail,
+          as: 'bookingDetail',
           attributes: { exclude: ['createdAt', 'updatedAt'] },
           include: [
             {
-              model: db.BookingDetail,
-              as: 'bookingDetails',
+              model: db.Booking,
+              as: 'booking',
               attributes: { exclude: ['createdAt', 'updatedAt'] },
             },
           ],
@@ -279,11 +293,6 @@ export default class ScheduleController {
               ],
             },
           ],
-        },
-        {
-          model: db.PriceList,
-          as: 'priceList',
-          attributes: { exclude: ['createdAt', 'updatedAt'] },
         },
       ];
       const { response, meta } = await FindAndCount(
@@ -324,11 +333,50 @@ export default class ScheduleController {
   static async getSchedule(req, res) {
     try {
       const { id } = req.params;
+
       const include = [
         {
           model: db.Customer,
           as: 'customer',
           attributes: { exclude: ['createdAt', 'updatedAt'] },
+          include: [
+            {
+              model: db.Company,
+              as: 'company',
+              attributes: { exclude: ['createdAt', 'updatedAt'] },
+            },
+          ],
+        },
+        {
+          model: db.BookingDetail,
+          as: 'bookingDetails',
+          attributes: { exclude: ['createdAt', 'updatedAt'] },
+          include: [
+            {
+              model: db.Booking,
+              as: 'booking',
+              attributes: { exclude: ['createdAt', 'updatedAt'] },
+            },
+          ],
+        },
+        {
+          model: db.Car,
+          as: 'car',
+          attributes: { exclude: ['createdAt', 'updatedAt'] },
+          include: [
+            {
+              model: db.CarModel,
+              as: 'carModel',
+              attributes: { exclude: ['createdAt', 'updatedAt'] },
+              include: [
+                {
+                  model: db.CarType,
+                  as: 'carType',
+                  attributes: { exclude: ['createdAt', 'updatedAt'] },
+                },
+              ],
+            },
+          ],
         },
       ];
 

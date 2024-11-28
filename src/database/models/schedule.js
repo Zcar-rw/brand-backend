@@ -18,11 +18,11 @@ export default (sequelize, DataTypes) => {
         onUpdate: 'CASCADE',
         onDelete: 'SET NULL',
       },
-      bookingId: {
+      bookingDetailId: {
         type: DataTypes.UUID,
         allowNull: false,
         references: {
-          model: 'Bookings',
+          model: 'BookingDetail',
           key: 'id',
         },
         onUpdate: 'CASCADE',
@@ -48,6 +48,11 @@ export default (sequelize, DataTypes) => {
         onUpdate: 'CASCADE',
         onDelete: 'SET NULL',
       },
+      status: {
+        type: DataTypes.ENUM('created', 'started', 'stopped', 'completed'),
+        defaultValue: 'created',
+        allowNull: false,
+      },
       createdBy: {
         type: DataTypes.UUID,
         allowNull: true,
@@ -58,45 +63,24 @@ export default (sequelize, DataTypes) => {
         onUpdate: 'CASCADE',
         onDelete: 'SET NULL',
       },
-      priceListId: {
-        type: DataTypes.UUID,
-        allowNull: false,
-        references: {
-          model: 'PriceLists',
-          key: 'id',
-        },
-        onUpdate: 'CASCADE',
-        onDelete: 'SET NULL',
-      },
-      status: {
-        type: DataTypes.ENUM(
-          'pending',
-          'started',
-          'cancelled',
-          'completed',
-          'overdue',
-        ),
-        defaultValue: 'pending',
-        allowNull: false,
-      },
-      amount: {
-        type: DataTypes.INTEGER,
-        allowNull: true,
-      },
-      initialAmount: {
-        type: DataTypes.INTEGER,
-        allowNull: true,
-      },
-      promoId: {
-        type: DataTypes.UUID,
-        allowNull: true,
-        // references: {
-        //   model: 'Promos',
-        //   key: 'id',
-        // },
-        // onUpdate: 'CASCADE',
-        // onDelete: 'SET NULL',
-      },
+      // amount: {
+      //   type: DataTypes.INTEGER,
+      //   allowNull: true,
+      // },
+      // initialAmount: {
+      //   type: DataTypes.INTEGER,
+      //   allowNull: true,
+      // },
+      // promoId: {
+      //   type: DataTypes.UUID,
+      //   allowNull: true,
+      //   references: {
+      //     model: 'Promos',
+      //     key: 'id',
+      //   },
+      //   onUpdate: 'CASCADE',
+      //   onDelete: 'SET NULL',
+      // },
       createdAt: {
         allowNull: false,
         type: DataTypes.DATE,
@@ -118,9 +102,9 @@ export default (sequelize, DataTypes) => {
       foreignKey: 'customerId',
       as: 'customer',
     });
-    Schedule.belongsTo(models.Booking, {
-      foreignKey: 'bookingId',
-      as: 'booking',
+    Schedule.belongsTo(models.BookingDetail, {
+      foreignKey: 'bookingDetailId',
+      as: 'bookingDetail',
     });
     Schedule.belongsTo(models.Car, {
       foreignKey: 'carId',
@@ -129,10 +113,6 @@ export default (sequelize, DataTypes) => {
     Schedule.belongsTo(models.User, {
       foreignKey: 'driverId',
       as: 'driver',
-    });
-    Schedule.belongsTo(models.PriceList, {
-      foreignKey: 'priceListId',
-      as: 'priceList',
     });
   };
   return Schedule;

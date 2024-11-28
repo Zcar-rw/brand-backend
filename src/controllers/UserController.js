@@ -344,4 +344,62 @@ export default class UserController {
       });
     }
   }
+
+  static async getDrivers(req, res) {
+    let { page, limit } = req.query;
+    if (!page) {
+      return res.status(status.BAD_REQUEST).send({
+        response: [],
+        error: 'Sorry, pagination parameters are required[page, limit]',
+      });
+    }
+
+    limit = limit || 5;
+    const offset = page === 1 ? 0 : (parseInt(page, 10) - 1) * limit;
+
+    const include = [
+      {
+        model: db.Role,
+        as: 'role',
+        attributes: { exclude: ['createdAt', 'updatedAt'] },
+      },
+    ];
+    const driverRole = await FindOne('Role', {
+      name: 'driver',
+    });
+    if (!driverRole || Object.keys(driverRole).length === 0) {
+      return res.status(status.NOT_FOUND).send({
+        response: [],
+        error: 'Sorry, No driver role found!',
+      });
+    }
+    const { response, meta } = await FindAndCount(
+      'User',
+      {
+        roleId: driverRole.id,
+      },
+      include,
+      limit,
+      offset,
+    );
+    console.log(response);
+    if (response && !response.length) {
+      return res.status(status.NO_CONTENT).send({
+        response: [],
+        error: 'Sorry, No booking found!',
+      });
+    }
+    return response && response.errors
+      ? res.status(status.BAD_REQUEST).send({
+          error: 'Users can not be retrieved at this moment, try again later',
+        })
+      : res.status(status.OK).json({
+          response,
+          meta: helper.generator.meta(
+            meta.count,
+            limit,
+            parseInt(page, 10) || 1,
+          ),
+        });
+  }
 }

@@ -279,11 +279,6 @@ export default class BookingController {
             },
           ],
         },
-        {
-          model: db.Schedule,
-          as: 'schedule',
-          attributes: { exclude: ['createdAt', 'updatedAt'] },
-        },
       ];
 
       let options = {};
@@ -370,11 +365,6 @@ export default class BookingController {
               attributes: { exclude: ['createdAt', 'updatedAt'] },
             },
           ],
-        },
-        {
-          model: db.Schedule,
-          as: 'schedule',
-          attributes: { exclude: ['createdAt', 'updatedAt'] },
         },
       ];
 

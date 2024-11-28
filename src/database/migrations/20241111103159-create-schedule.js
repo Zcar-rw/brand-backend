@@ -20,11 +20,11 @@ export default {
         onUpdate: 'CASCADE',
         onDelete: 'SET NULL',
       },
-      bookingId: {
+      bookingDetailId: {
         type: Sequelize.UUID,
         allowNull: false,
         references: {
-          model: 'Bookings',
+          model: 'BookingDetails',
           key: 'id',
         },
         onUpdate: 'CASCADE',
@@ -50,6 +50,11 @@ export default {
         onUpdate: 'CASCADE',
         onDelete: 'SET NULL',
       },
+      status: {
+        type: Sequelize.ENUM('created', 'started', 'stopped', 'completed'),
+        defaultValue: 'created',
+        allowNull: false,
+      },
       createdBy: {
         type: Sequelize.UUID,
         allowNull: true,
@@ -60,45 +65,24 @@ export default {
         onUpdate: 'CASCADE',
         onDelete: 'SET NULL',
       },
-      priceListId: {
-        type: Sequelize.UUID,
-        allowNull: false,
-        references: {
-          model: 'PriceLists',
-          key: 'id',
-        },
-        onUpdate: 'CASCADE',
-        onDelete: 'SET NULL',
-      },
-      status: {
-        type: Sequelize.ENUM(
-          'pending',
-          'started',
-          'cancelled',
-          'completed',
-          'overdue',
-        ),
-        defaultValue: 'pending',
-        allowNull: false,
-      },
-      amount: {
-        type: Sequelize.DECIMAL,
-        allowNull: false,
-      },
-      initialAmount: {
-        type: Sequelize.DECIMAL,
-        allowNull: true,
-      },
-      promoId: {
-        type: Sequelize.UUID,
-        allowNull: true,
-        // references: {
-        //   model: 'Promos',
-        //   key: 'id',
-        // },
-        // onUpdate: 'CASCADE',
-        // onDelete: 'SET NULL',
-      },
+      // amount: {
+      //   type: Sequelize.DECIMAL,
+      //   allowNull: false,
+      // },
+      // initialAmount: {
+      //   type: Sequelize.DECIMAL,
+      //   allowNull: true,
+      // },
+      // promoId: {
+      //   type: Sequelize.UUID,
+      //   allowNull: true,
+      //   references: {
+      //     model: 'Promos',
+      //     key: 'id',
+      //   },
+      //   onUpdate: 'CASCADE',
+      //   onDelete: 'SET NULL',
+      // },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE,

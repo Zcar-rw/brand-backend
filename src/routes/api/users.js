@@ -13,6 +13,12 @@ router.get(
   isCompanyAdmin,
   UserController.getAllCompanyUsers,
 );
+router.get(
+  '/drivers',
+  verifyToken,
+  isAdmin,
+  asyncHandler(UserController.getDrivers),
+);
 router.post(
   '/register/internal-user',
   verifyToken,
@@ -41,6 +47,6 @@ router.get(
   '/customers',
   verifyToken,
   asyncHandler(UserController.getCustomers),
-)
+);
 
 export default router;
