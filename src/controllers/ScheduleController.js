@@ -1,3 +1,4 @@
+import { Op } from 'sequelize';
 import status from '../config/status';
 import db from '../database/models';
 import bookingDetails from '../database/models/bookingDetails';
@@ -192,7 +193,8 @@ export default class ScheduleController {
 
   static async getSchedules(req, res) {
     try {
-      let { page, limit } = req.query;
+      let { page, limit, plateId, startDate, endDate, customerQuery } =
+        req.query;
       if (!page) {
         return res.status(status.BAD_REQUEST).send({
           response: [],
@@ -232,6 +234,45 @@ export default class ScheduleController {
 
       if (user.role.name === 'admin') {
         options = {};
+        // if (
+        //   startDate &&
+        //   startDate !== 'undefined' &&
+        //   startDate !== 'null' &&
+        //   endDate &&
+        //   endDate !== 'undefined' &&
+        //   endDate !== 'null'
+        // ) {
+        //   options['$bookingDetail.date$'] = {
+        //     ...(startDate && { [Op.gte]: startDate }),
+        //     ...(endDate && { [Op.lte]: endDate }),
+        //   };
+        // }
+
+        // if (startDate && endDate) {
+        //   options = {
+        //     ...options,
+        //     '$bookingDetail.date$': {
+        //       [db.Sequelize.Op.between]: [
+        //         new Date(startDate),
+        //         new Date(endDate),
+        //       ],
+        //     },
+        //   };
+        // } else if (startDate) {
+        //   options = {
+        //     ...options,
+        //     '$bookingDetail.date$': {
+        //       [db.Sequelize.Op.gte]: new Date(startDate),
+        //     },
+        //   };
+        // } else if (endDate) {
+        //   options = {
+        //     ...options,
+        //     '$bookingDetail.date$': {
+        //       [db.Sequelize.Op.lte]: new Date(endDate),
+        //     },
+        //   };
+        // }
       } else if (
         user.role.name === 'cooperate-owner' &&
         (!user ||
@@ -243,6 +284,18 @@ export default class ScheduleController {
         options = {
           customerId: user.companies[0].customers[0].id,
         };
+      } else if (user.role.name === 'driver') {
+        options = {
+          driverId: userId,
+        };
+      }
+
+      if (plateId && plateId !== 'undefined' && plateId !== 'null') {
+        console.log(plateId, 'LLLL');
+        options = {
+          ...options,
+          carId: plateId,
+        };
       }
 
       const include = [
@@ -251,6 +304,25 @@ export default class ScheduleController {
           as: 'driver',
           attributes: { exclude: ['createdAt', 'updatedAt'] },
         },
+        // {
+        //   model: db.Customer,
+        //   as: 'customer',
+        //   attributes: { exclude: ['createdAt', 'updatedAt'] },
+        //   include: [
+        //     {
+        //       model: db.Company,
+        //       as: 'company',
+        //       attributes: { exclude: ['createdAt', 'updatedAt'] },
+        //       where: {
+        //         ...(customerQuery && {
+        //           name: {
+        //             [db.Sequelize.Op.iLike]: `%${customerQuery}%`,
+        //           },
+        //         }),
+        //       },
+        //     },
+        //   ],
+        // },`
         {
           model: db.Customer,
           as: 'customer',
@@ -260,8 +332,17 @@ export default class ScheduleController {
               model: db.Company,
               as: 'company',
               attributes: { exclude: ['createdAt', 'updatedAt'] },
+              where: {
+                ...(customerQuery && {
+                  name: {
+                    [db.Sequelize.Op.iLike]: `%${customerQuery}%`,
+                  },
+                }),
+              },
+              required: true,
             },
           ],
+          required: true,
         },
         {
           model: db.BookingDetail,
@@ -274,6 +355,29 @@ export default class ScheduleController {
               attributes: { exclude: ['createdAt', 'updatedAt'] },
             },
           ],
+          where: {
+            ...(startDate &&
+              endDate && {
+                date: {
+                  [db.Sequelize.Op.between]: [
+                    new Date(startDate),
+                    new Date(endDate),
+                  ],
+                },
+              }),
+            ...(startDate &&
+              !endDate && {
+                date: {
+                  [db.Sequelize.Op.gte]: new Date(startDate),
+                },
+              }),
+            ...(!startDate &&
+              endDate && {
+                date: {
+                  [db.Sequelize.Op.lte]: new Date(endDate),
+                },
+              }),
+          },
         },
         {
           model: db.Car,
@@ -334,6 +438,8 @@ export default class ScheduleController {
     try {
       const { id } = req.params;
 
+      console.log(id, 'ID');
+
       const include = [
         {
           model: db.Customer,
@@ -349,7 +455,7 @@ export default class ScheduleController {
         },
         {
           model: db.BookingDetail,
-          as: 'bookingDetails',
+          as: 'bookingDetail',
           attributes: { exclude: ['createdAt', 'updatedAt'] },
           include: [
             {
@@ -382,19 +488,21 @@ export default class ScheduleController {
 
       const schedule = await FindOne('Schedule', { id }, include);
 
+      console.log(schedule, 'KKKKKK')
       if (!schedule) {
         return res.status(status.NOT_FOUND).json({
           status: 'error',
           message: 'Schedule not found',
         });
       }
-
+      
       return res.status(status.OK).json({
         status: 'success',
         message: 'Schedule retrieved successfully',
         data: schedule,
       });
     } catch (error) {
+      console.log(error, 'LLLLLLLLLLLLL')
       console.error('Schedule retrieval error:', error);
       return res.status(status.INTERNAL_SERVER_ERROR).json({
         status: 'error',

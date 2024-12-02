@@ -1,7 +1,7 @@
 import express from 'express';
 import ScheduleController from '../../controllers/ScheduleController';
 import asyncHandler from '../../middlewares/asyncHandler';
-import { isAdmin, verifyToken } from '../../middlewares';
+import { isAdmin, isDriver, verifyToken } from '../../middlewares';
 import scheduleValidations from '../../helpers/validators/scheduleValidate.js';
 
 const router = express.Router();
@@ -28,6 +28,7 @@ router.get(
 router.patch(
   '/update/:id',
   verifyToken,
+  isDriver,
   asyncHandler(ScheduleController.updateSchedule),
 );
 
