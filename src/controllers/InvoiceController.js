@@ -107,15 +107,15 @@ export default class InvoiceController {
 
   static async getInvoices(req, res) {
     try {
-      // let { page, limit } = req.query;
-      // if (!page) {
-      //   return res.status(status.BAD_REQUEST).send({
-      //     response: [],
-      //     error: 'Sorry, pagination parameters are required[page, limit]',
-      //   });
-      // }
-      // const count = limit || 9;
-      // const offset = page === 1 ? 0 : (parseInt(page, 10) - 1) * count;
+      let { page, limit } = req.query;
+      if (!page) {
+        return res.status(status.BAD_REQUEST).send({
+          response: [],
+          error: 'Sorry, pagination parameters are required[page, limit]',
+        });
+      }
+      const count = limit || 9;
+      const offset = page === 1 ? 0 : (parseInt(page, 10) - 1) * count;
       const { userId } = req.body;
       const user = await FindOne('User', { id: userId }, [
         {
@@ -180,12 +180,12 @@ export default class InvoiceController {
         },
       ];
       
-      const { response, meta } = await FindAll(
+      const { response, meta } = await FindAndCount(
         'Invoice',
         options,
         include,
-        // limit,
-        // offset,
+        limit,
+        offset,
       );
 
       if (response && !response.length) {
@@ -200,11 +200,11 @@ export default class InvoiceController {
               'Invoices can not be retrieved at this moment, try again later',
           })
         : res.status(status.OK).json({
-            // meta: helper.generator.meta(
-            //   meta.count,
-            //   limit,
-            //   parseInt(page, 10) || 1,
-            // ),
+            meta: helper.generator.meta(
+              meta.count,
+              limit,
+              parseInt(page, 10) || 1,
+            ),
             response,
           });
     } catch (error) {
