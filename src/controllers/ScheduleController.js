@@ -67,45 +67,9 @@ export default class ScheduleController {
                 model: db.Customer,
                 as: 'customer',
                 attributes: { exclude: ['createdAt', 'updatedAt'] },
-                // include: [
-                //   {
-                //     model: db.Company,
-                //     as: 'company',
-                //     attributes: { exclude: ['createdAt', 'updatedAt'] },
-                //   },
-                // ],
               },
             ],
           },
-          // {
-          //   model: db.Customer,
-          //   as: 'customer',
-          //   attributes: { exclude: ['createdAt', 'updatedAt'] },
-          //   include: [
-          //     {
-          //       model: db.Company,
-          //       as: 'company',
-          //       attributes: { exclude: ['createdAt', 'updatedAt'] },
-          //     },
-          //   ],
-          // },
-          // {
-          //   model: db.User,
-          //   as: 'user',
-          //   attributes: { exclude: ['createdAt', 'updatedAt'] },
-          // },
-          // {
-          //   model: db.BookingDetail,
-          //   as: 'bookingDetails',
-          //   attributes: { exclude: ['createdAt', 'updatedAt'] },
-          //   include: [
-          //     {
-          //       model: db.CarType,
-          //       as: 'car',
-          //       attributes: { exclude: ['createdAt', 'updatedAt'] },
-          //     },
-          //   ],
-          // },
           {
             model: db.Schedule,
             as: 'schedule',
@@ -291,7 +255,6 @@ export default class ScheduleController {
       }
 
       if (plateId && plateId !== 'undefined' && plateId !== 'null') {
-        console.log(plateId, 'LLLL');
         options = {
           ...options,
           carId: plateId,
@@ -488,21 +451,19 @@ export default class ScheduleController {
 
       const schedule = await FindOne('Schedule', { id }, include);
 
-      console.log(schedule, 'KKKKKK')
       if (!schedule) {
         return res.status(status.NOT_FOUND).json({
           status: 'error',
           message: 'Schedule not found',
         });
       }
-      
+
       return res.status(status.OK).json({
         status: 'success',
         message: 'Schedule retrieved successfully',
         data: schedule,
       });
     } catch (error) {
-      console.log(error, 'LLLLLLLLLLLLL')
       console.error('Schedule retrieval error:', error);
       return res.status(status.INTERNAL_SERVER_ERROR).json({
         status: 'error',

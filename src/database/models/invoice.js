@@ -8,6 +8,11 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.UUID,
         defaultValue: DataTypes.UUIDV4,
       },
+      status: {
+        type: DataTypes.ENUM('created', 'paid', 'partially-paid', 'cancelled'),
+        defaultValue: 'created',
+        allowNull: false,
+      },
       bookingId: {
         type: DataTypes.UUID,
         allowNull: false,
@@ -28,10 +33,31 @@ export default (sequelize, DataTypes) => {
         onUpdate: 'CASCADE',
         onDelete: 'SET NULL',
       },
-      status: {
-        type: DataTypes.ENUM('pending', 'paid', 'cancelled', 'failed'),
-        defaultValue: 'pending',
-        allowNull: false,
+      amount: {
+        type: DataTypes.DECIMAL,
+        allowNull: true,
+      },
+      year: {
+        type: DataTypes.DECIMAL,
+        allowNull: true,
+      },
+      month: {
+        type: DataTypes.DECIMAL,
+        allowNull: true,
+      },
+      increment: {
+        type: DataTypes.DECIMAL,
+        allowNull: true,
+      },
+      createdBy: {
+        type: DataTypes.UUID,
+        allowNull: true,
+        references: {
+          model: 'Users',
+          key: 'id',
+        },
+        onUpdate: 'CASCADE',
+        onDelete: 'SET NULL',
       },
       createdAt: {
         allowNull: false,
@@ -53,6 +79,10 @@ export default (sequelize, DataTypes) => {
     Invoice.belongsTo(models.Booking, {
       foreignKey: 'bookingId',
       as: 'booking',
+    });
+    Invoice.belongsTo(models.User, {
+      foreignKey: 'createdBy',
+      as: 'createdByUser',
     });
   };
   return Invoice;

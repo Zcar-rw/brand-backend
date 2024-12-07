@@ -10,6 +10,11 @@ export default {
         type: Sequelize.UUID,
         defaultValue: Sequelize.UUIDV4,
       },
+      status: {
+        type: Sequelize.ENUM('created', 'paid', 'partially-paid', 'cancelled'),
+        defaultValue: 'created',
+        allowNull: false,
+      },
       bookingId: {
         type: Sequelize.UUID,
         allowNull: false,
@@ -30,10 +35,31 @@ export default {
         onUpdate: 'CASCADE',
         onDelete: 'SET NULL',
       },
-      status: {
-        type: Sequelize.ENUM('pending', 'paid', 'cancelled', 'failed'),
-        defaultValue: 'pending',
-        allowNull: false,
+      amount: {
+        type: Sequelize.DECIMAL,
+        allowNull: true,
+      },
+      year: {
+        type: Sequelize.DECIMAL,
+        allowNull: true,
+      },
+      month: {
+        type: Sequelize.DECIMAL,
+        allowNull: true,
+      },
+      increment: {
+        type: Sequelize.DECIMAL,
+        allowNull: true,
+      },
+      createdBy: {
+        type: Sequelize.UUID,
+        allowNull: true,
+        references: {
+          model: 'Users',
+          key: 'id',
+        },
+        onUpdate: 'CASCADE',
+        onDelete: 'SET NULL',
       },
       createdAt: {
         allowNull: false,
