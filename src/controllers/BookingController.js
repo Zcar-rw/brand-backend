@@ -279,6 +279,11 @@ export default class BookingController {
             },
           ],
         },
+        {
+          model: db.Invoice,
+          as: 'invoice',
+          attributes: { exclude: ['createdAt', 'updatedAt'] },
+        },
       ];
 
       let options = {};
@@ -365,6 +370,11 @@ export default class BookingController {
               attributes: { exclude: ['createdAt', 'updatedAt'] },
             },
           ],
+        },
+        {
+          model: db.Invoice,
+          as: 'invoice',
+          attributes: { exclude: ['createdAt', 'updatedAt'] },
         },
       ];
 
@@ -636,6 +646,14 @@ export default class BookingController {
         return res.status(status.NOT_FOUND).json({
           status: 'error',
           message: 'Booking not found',
+        });
+      }
+
+      const invoice = await FindOne('Invoice', { bookingId });
+      if (invoice && Object.keys(invoice).length > 0) {
+        return res.status(status.BAD_REQUEST).json({
+          status: 'error',
+          message: 'Invoice already exists for this booking',
         });
       }
 

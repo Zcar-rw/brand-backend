@@ -78,6 +78,10 @@ export default (sequelize, DataTypes) => {
       foreignKey: 'bookingId',
       as: 'bookingDetails',
     });
+    Booking.hasOne(models.Invoice, {
+      foreignKey: 'bookingId',
+      as: 'invoice',
+    });
   };
   return Booking;
 };

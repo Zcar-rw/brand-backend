@@ -8,47 +8,85 @@ import {
   Update,
 } from '../database/queries';
 import * as helper from '../helpers';
+import moment from 'moment';
 
 export default class InvoiceController {
   static async createInvoice(req, res) {
     try {
-      const {
-        scheduleId,
-        // customerId, // From Booking -> Schedule
-      } = req.body;
+      const { bookingId, userId } = req.body;
 
-      const schedule = await FindOne('Schedule', { id: scheduleId }, [
+      const include = [
         {
-          model: db.Booking,
-          as: 'booking',
+          model: db.Customer,
+          as: 'customer',
           attributes: { exclude: ['createdAt', 'updatedAt'] },
           include: [
             {
-              model: db.Customer,
-              as: 'customer',
+              model: db.Company,
+              as: 'company',
               attributes: { exclude: ['createdAt', 'updatedAt'] },
-              include: [
-                {
-                  model: db.Company,
-                  as: 'company',
-                  attributes: { exclude: ['createdAt', 'updatedAt'] },
-                },
-              ],
             },
           ],
         },
-      ]);
-      if (!schedule || Object.keys(schedule).length === 0) {
-        return res.status(status.BAD_REQUEST).json({
+        {
+          model: db.User,
+          as: 'user',
+          attributes: { exclude: ['createdAt', 'updatedAt'] },
+        },
+        {
+          model: db.BookingDetail,
+          as: 'bookingDetails',
+          attributes: { exclude: ['createdAt', 'updatedAt'] },
+          include: [
+            {
+              model: db.CarType,
+              as: 'car',
+              attributes: { exclude: ['createdAt', 'updatedAt'] },
+            },
+          ],
+        },
+      ];
+
+      const booking = await FindOne('Booking', { id: bookingId }, include);
+      if (!booking || Object.keys(booking).length === 0) {
+        return res.status(status.NOT_FOUND).json({
           status: 'error',
-          message: 'Schedule not found',
+          message: 'Booking not found',
         });
       }
+      if (booking?.bookingDetails?.length === 0) {
+        return res.status(status.NOT_FOUND).json({
+          status: 'error',
+          message: 'Booking should have booking details',
+        });
+      }
+      const totalAmount = booking?.bookingDetails
+        ?.filter((x) => x.price !== null && x.price !== 0)
+        ?.reduce((acc, item) => acc + parseInt(item.price), 0);
+
+      if (totalAmount <= 0) {
+        return res.status(status.NOT_FOUND).json({
+          status: 'error',
+          message: "Booking's total amount should be greater than 0",
+        });
+      }
+      const invoicesByBookingId = await FindAll('Invoice', {
+        bookingId,
+      });
+      const invoicesOfThisMonth =
+        invoicesByBookingId?.response?.filter(
+          (x) => x.year === moment().year() && x.month === moment().month(),
+        ) || [];
 
       const invoice = await Create('Invoice', {
-        customerId: schedule?.booking?.customer?.id,
-        bookingId: schedule?.booking?.id,
-        status: 'pending',
+        bookingId: booking?.id,
+        customerId: booking?.customer?.id,
+        status: 'created',
+        amount: totalAmount,
+        year: moment().year(),
+        month: moment().month(),
+        increment: invoicesOfThisMonth.length + 1,
+        createdBy: userId,
       });
 
       return res.status(status.CREATED).json({
@@ -127,13 +165,6 @@ export default class InvoiceController {
           model: db.Customer,
           as: 'customer',
           attributes: { exclude: ['createdAt', 'updatedAt'] },
-          include: [
-            {
-              model: db.Company,
-              as: 'company',
-              attributes: { exclude: ['createdAt', 'updatedAt'] },
-            },
-          ],
         },
         {
           model: db.Booking,
@@ -145,14 +176,10 @@ export default class InvoiceController {
               as: 'bookingDetails',
               attributes: { exclude: ['createdAt', 'updatedAt'] },
             },
-            {
-              model: db.Schedule,
-              as: 'schedule',
-              attributes: { exclude: ['createdAt', 'updatedAt'] },
-            }
           ],
         },
       ];
+      
       const { response, meta } = await FindAndCount(
         'Invoice',
         options,
@@ -160,6 +187,7 @@ export default class InvoiceController {
         limit,
         offset,
       );
+
       if (response && !response.length) {
         return res.status(status.NOT_FOUND).send({
           error: 'No invoices found',

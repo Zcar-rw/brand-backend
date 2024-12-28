@@ -9,7 +9,7 @@ const router = express.Router();
 router.post(
   '/create',
   verifyToken,
-  isAdmin,
+  // isAdmin,
   // invoiceValidations.invoiceCreation,
   asyncHandler(InvoiceController.createInvoice),
 );
