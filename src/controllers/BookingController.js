@@ -283,6 +283,13 @@ export default class BookingController {
           model: db.Invoice,
           as: 'invoice',
           attributes: { exclude: ['createdAt', 'updatedAt'] },
+          include: [
+            {
+              model: db.Transaction,
+              as: 'transactions',
+              attributes: { exclude: ['createdAt', 'updatedAt'] },
+            },
+          ],
         },
       ];
 
@@ -375,6 +382,13 @@ export default class BookingController {
           model: db.Invoice,
           as: 'invoice',
           attributes: { exclude: ['createdAt', 'updatedAt'] },
+          include: [
+            {
+              model: db.Transaction,
+              as: 'transactions',
+              attributes: { exclude: ['createdAt', 'updatedAt'] },
+            },
+          ],
         },
       ];
 
