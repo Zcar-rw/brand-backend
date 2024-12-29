@@ -244,6 +244,7 @@ export default class UserController {
       address,
       password,
     } = req.body;
+    console.log(res.body, '{{{{{')
     try {
       // GET USER ROLE
       const role = await FindOne('Role', {
@@ -266,7 +267,7 @@ export default class UserController {
         // TODO: REGISTER BUSINESS
         const business = await Create('Company', {
           name: businessName,
-          TIN,
+          TIN: parseInt(TIN),
           address,
           ownerId: response.id,
           verified: false,
@@ -304,6 +305,7 @@ export default class UserController {
         .status(status.CREATED)
         .send({ response, message: 'User created successfully' });
     } catch (error) {
+      console.log(error)
       // if error occurred, deleted the created user(if exist)
       await Delete('User', {
         email,

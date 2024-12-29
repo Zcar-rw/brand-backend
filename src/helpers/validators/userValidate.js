@@ -26,7 +26,7 @@ const clientBusinessUserSchema = Joi.object({
   ...userFields,
   password: Joi.string().required(),
   businessName: Joi.string().required(),
-  TIN: Joi.string().required(),
+  TIN: Joi.string().required().max(7),
   address: Joi.string().required(),
 });
 

@@ -84,6 +84,10 @@ export default (sequelize, DataTypes) => {
       foreignKey: 'createdBy',
       as: 'createdByUser',
     });
+    Invoice.hasMany(models.Transaction, {
+      foreignKey: 'invoiceId',
+      as: 'transactions',
+    });
   };
   return Invoice;
 };

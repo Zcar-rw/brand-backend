@@ -1,19 +1,12 @@
 import status from '../config/status';
 import db from '../database/models';
-import {
-  Create,
-  FindAll,
-  FindAndCount,
-  FindOne,
-  Update,
-} from '../database/queries';
+import { Create, Delete, FindAll, FindAndCount, FindOne } from '../database/queries';
 import * as helper from '../helpers';
-import moment from 'moment';
 
-export default class InvoiceController {
-  static async createInvoice(req, res) {
+export default class TransactionController {
+  static async createTransaction(req, res) {
     try {
-      const { bookingId, userId } = req.body;
+      const { invoiceId, amount, source, userId } = req.body;
 
       const include = [
         {
@@ -30,82 +23,46 @@ export default class InvoiceController {
         },
         {
           model: db.User,
-          as: 'user',
+          as: 'createdByUser',
           attributes: { exclude: ['createdAt', 'updatedAt'] },
-        },
-        {
-          model: db.BookingDetail,
-          as: 'bookingDetails',
-          attributes: { exclude: ['createdAt', 'updatedAt'] },
-          include: [
-            {
-              model: db.CarType,
-              as: 'car',
-              attributes: { exclude: ['createdAt', 'updatedAt'] },
-            },
-          ],
         },
       ];
 
-      const booking = await FindOne('Booking', { id: bookingId }, include);
-      if (!booking || Object.keys(booking).length === 0) {
+      const invoice = await FindOne('Invoice', { id: invoiceId }, include);
+      if (!invoice || Object.keys(invoice).length === 0) {
         return res.status(status.NOT_FOUND).json({
           status: 'error',
-          message: 'Booking not found',
+          message: 'Invoice not found',
         });
       }
-      if (booking?.bookingDetails?.length === 0) {
-        return res.status(status.NOT_FOUND).json({
-          status: 'error',
-          message: 'Booking should have booking details',
-        });
-      }
-      const totalAmount = booking?.bookingDetails
-        ?.filter((x) => x.price !== null && x.price !== 0)
-        ?.reduce((acc, item) => acc + parseInt(item.price), 0);
+      console.log(invoice, 'invoice##############');
 
-      if (totalAmount <= 0) {
-        return res.status(status.NOT_FOUND).json({
-          status: 'error',
-          message: "Booking's total amount should be greater than 0",
-        });
-      }
-      const invoicesByBookingId = await FindAll('Invoice', {
-        bookingId,
-      });
-      const invoicesOfThisMonth =
-        invoicesByBookingId?.response?.filter(
-          (x) => x.year === moment().year() && x.month === moment().month(),
-        ) || [];
-
-      const invoice = await Create('Invoice', {
-        bookingId: booking?.id,
-        customerId: booking?.customer?.id,
-        status: 'created',
-        amount: totalAmount,
-        year: moment().year(),
-        month: moment().month(),
-        increment: invoicesOfThisMonth.length + 1,
+      const transaction = await Create('Transaction', {
+        invoiceId: invoice?.id,
+        type: 'debitted',
+        source,
+        amount,
         createdBy: userId,
+        accountId: invoice?.customer?.company?.id,
       });
 
       return res.status(status.CREATED).json({
         status: 'success',
-        message: 'Invoice created successfully',
+        message: 'Transaction created successfully',
         data: {
-          ...invoice,
+          ...transaction,
         },
       });
     } catch (error) {
-      console.error('Invoice creation error:', error);
+      console.error('Transaction creation error:', error);
       return res.status(status.INTERNAL_SERVER_ERROR).json({
         status: 'error',
-        message: 'An error occurred while creating the invoice.',
+        message: 'An error occurred while creating the transaction.',
       });
     }
   }
 
-  static async getInvoices(req, res) {
+  static async getTransactions(req, res) {
     try {
       let { page, limit } = req.query;
       if (!page) {
@@ -162,38 +119,26 @@ export default class InvoiceController {
 
       const include = [
         {
-          model: db.Customer,
-          as: 'customer',
+          model: db.Company,
+          as: 'company',
+          attributes: { exclude: ['createdAt', 'updatedAt'] },
+        },
+        {
+          model: db.Invoice,
+          as: 'invoice',
           attributes: { exclude: ['createdAt', 'updatedAt'] },
           include: [
             {
-              model: db.Company,
-              as: 'company',
+              model: db.InvoiceDetail,
+              as: 'invoiceDetails',
               attributes: { exclude: ['createdAt', 'updatedAt'] },
             },
           ],
         },
-        {
-          model: db.Booking,
-          as: 'booking',
-          attributes: { exclude: ['createdAt', 'updatedAt'] },
-          include: [
-            {
-              model: db.BookingDetail,
-              as: 'bookingDetails',
-              attributes: { exclude: ['createdAt', 'updatedAt'] },
-            },
-          ],
-        },
-        {
-          model: db.Transaction,
-          as: 'transactions',
-          attributes: { exclude: ['createdAt', 'updatedAt'] },
-        }
       ];
 
       const { response, meta } = await FindAndCount(
-        'Invoice',
+        'Transaction',
         options,
         include,
         limit,
@@ -202,14 +147,14 @@ export default class InvoiceController {
 
       if (response && !response.length) {
         return res.status(status.NOT_FOUND).send({
-          error: 'No invoices found',
+          error: 'No transactions found',
           response: [],
         });
       }
       return response && response.errors
         ? res.status(status.BAD_REQUEST).send({
             error:
-              'Invoices can not be retrieved at this moment, try again later',
+              'Transactions can not be retrieved at this moment, try again later',
           })
         : res.status(status.OK).json({
             meta: helper.generator.meta(
@@ -220,71 +165,109 @@ export default class InvoiceController {
             response,
           });
     } catch (error) {
-      console.error('Invoices retrieval error:', error);
+      console.error('Transactions retrieval error:', error);
       return res.status(status.INTERNAL_SERVER_ERROR).json({
         status: 'error',
-        message: 'An error occurred while retrieving invoices.',
+        message: 'An error occurred while retrieving transactions.',
       });
     }
   }
 
-  static async getInvoice(req, res) {
+  static async getTransaction(req, res) {
     try {
       const { id } = req.params;
       const include = [
         {
-          model: db.Customer,
-          as: 'customer',
+          model: db.Company,
+          as: 'company',
           attributes: { exclude: ['createdAt', 'updatedAt'] },
         },
       ];
 
-      const invoice = await FindOne('Invoice', { id }, include);
+      const transaction = await FindOne('Transaction', { id }, include);
 
-      if (!invoice) {
+      if (!transaction) {
         return res.status(status.NOT_FOUND).json({
           status: 'error',
-          message: 'Invoice not found',
+          message: 'Transaction not found',
         });
       }
 
       return res.status(status.OK).json({
         status: 'success',
-        message: 'Invoice retrieved successfully',
-        data: invoice,
+        message: 'Transaction retrieved successfully',
+        data: transaction,
       });
     } catch (error) {
-      console.error('Invoice retrieval error:', error);
+      console.error('Transaction retrieval error:', error);
       return res.status(status.INTERNAL_SERVER_ERROR).json({
         status: 'error',
-        message: 'An error occurred while retrieving the invoice.',
+        message: 'An error occurred while retrieving the transaction.',
       });
     }
   }
 
-  static async updateInvoice(req, res) {
+  static async getTransactionByInvoice(req, res) {
     try {
-      const { id } = req.params;
-      const invoice = await FindOne('Invoice', { id });
-
+      const { id: invoiceId } = req.params;
+      // verify if invoice exists
+      const invoice = await FindOne('Invoice', { id: invoiceId });
       if (!invoice || Object.keys(invoice).length === 0) {
         return res.status(status.NOT_FOUND).json({
           status: 'error',
           message: 'Invoice not found',
         });
       }
-      const updatedInvoice = await Update('Invoice', { ...req.body }, { id });
+      const include = [
+        {
+          model: db.Company,
+          as: 'company',
+          attributes: { exclude: ['createdAt', 'updatedAt'] },
+        },
+      ];
+
+      const transaction = await FindAll('Transaction', { invoiceId }, include);
+
+      if (!transaction) {
+        return res.status(status.NOT_FOUND).json({
+          status: 'error',
+          message: 'Transaction not found',
+        });
+      }
 
       return res.status(status.OK).json({
         status: 'success',
-        message: 'Invoice updated successfully',
-        data: updatedInvoice,
+        message: 'Transaction retrieved successfully',
+        data: transaction,
       });
     } catch (error) {
-      console.error('Invoice update error:', error);
+      console.error('Transaction retrieval error:', error);
       return res.status(status.INTERNAL_SERVER_ERROR).json({
         status: 'error',
-        message: 'An error occurred while updating the invoice.',
+        message: 'An error occurred while retrieving the transaction.',
+      });
+    }
+  }
+  static async deleteTransaction(req, res) {
+    try {
+      const { id } = req.params;
+      const transaction = await FindOne('Transaction', { id });
+      if (!transaction || Object.keys(transaction).length === 0) {
+        return res.status(status.NOT_FOUND).json({
+          status: 'error',
+          message: 'Transaction not found',
+        });
+      }
+      await Delete('Transaction', { id });
+      return res.status(status.OK).json({
+        status: 'success',
+        message: 'Transaction deleted successfully',
+      });
+    } catch (error) {
+      console.error('Transaction deletion error:', error);
+      return res.status(status.INTERNAL_SERVER_ERROR).json({
+        status: 'error',
+        message: 'An error occurred while deleting the transaction.',
       });
     }
   }
