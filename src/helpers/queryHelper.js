@@ -1,27 +1,6 @@
-const dbFindSingle = async (model, whereCondition = {}, include) => model.findOne({
-  where: whereCondition,
-  logging: false,
-  include
-});
-
-const dbFindAll = async (model, whereCondition, offset = 0, limit = 20, include) => model.findAll({
-  offset,
-  limit,
-  where: whereCondition,
-  logging: false,
-  include
-});
-
-const dbCreate = async (model, condition) => model.create(condition, { logging: false });
-
-const dbDelete = async (model, whereCondition) => model.destroy({
-  where: whereCondition,
-  logging: false
-});
-const dbUpdate = async (model, condition, whereCondition = {}) => {
-  model.update(condition, { where: whereCondition, logging: false });
-};
-
-export {
-  dbFindSingle, dbFindAll, dbCreate, dbDelete, dbUpdate
-};
+// Deprecated: Sequelize-specific helper. Kept for backward compatibility but no-op in Mongo setup.
+export const dbFindSingle = async () => ({});
+export const dbFindAll = async () => ({ response: [], meta: {} });
+export const dbCreate = async () => ({});
+export const dbDelete = async () => ({ response: 0 });
+export const dbUpdate = async () => ({});

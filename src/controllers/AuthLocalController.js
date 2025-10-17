@@ -18,6 +18,9 @@ export default class AuthLocalController {
    * @return {object} user information & token
    */
   static async signup(req, res) {
+    console.log({
+      req
+    })
     req.body.password = helper.password.hash(req.body.password);
     try {
       const response = await Create('User', req.body);
@@ -34,6 +37,7 @@ export default class AuthLocalController {
   }
 
   static async login(req, res) {
+    console.log({req: "*S)HS)USH"})
     const { password } = req.body;
     const user = req.auth;
    
@@ -167,22 +171,22 @@ export default class AuthLocalController {
       //   })
       // }
       // 2. CHECK ACCOUNT AND UPDATE PASSWORD
-      const response = await FindOne('User', { email });
+      const existing = await FindOne('User', { email });
+      if (!Object.keys(existing).length) {
+        return res.status(status.NOT_FOUND).json({
+          error: 'Account not found',
+        });
+      }
       const hashedPassword = helper.password.hash(password);
-
-      response.update({
-        password: hashedPassword,
-      });
+      const response = await Update('User', { password: hashedPassword }, { email });
 
       // 3. CHECK AND DELETE Reset OTP CODE
       await Delete('ResetPassword', {
         email,
         code,
       });
-      return (
-        delete response.get().password &&
-        res.status(status.CREATED).json({ response })
-      );
+      if (response && response.password) delete response.password
+      return res.status(status.CREATED).json({ response });
     } catch (error) {
       return res.status(status.BAD_REQUEST).send({
         error:

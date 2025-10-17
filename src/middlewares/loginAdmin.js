@@ -28,6 +28,6 @@ export default async (req, res, next) => {
         error: `Account with '${req.body.email}' might not have the right permissions to login here`,
       })
     }
-    req.auth = user.get()
+  req.auth = typeof user.get === 'function' ? user.get() : user
     next()
 }

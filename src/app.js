@@ -6,7 +6,8 @@ import dotenv from 'dotenv'
 import cors from 'cors'
 import session from 'express-session'
 import routes from './routes'
-import { sequelize } from './database/models'
+import { connectMongo } from './database/mongo'
+import { bootstrapMongo } from './database/mongoose/bootstrap'
 import path from 'path'
 
 const app = express()
@@ -34,30 +35,21 @@ app.use(express.json())
 app.use(express.urlencoded({ extended: false }))
 app.use(cors())
 
-//Check DBs connection
-if (mode === 'development') {
-  sequelize
-    .authenticate()
-    .then(() => {
-      console.log('Development DB Connected!')
-    })
-    .catch((err) => {
-      console.log('Development DB Not Connected!')
-      console.log({ Error_Message: err })
-    })
-}
-
-if (mode === 'production') {
-  sequelize
-    .authenticate()
-    .then(() => {
-      console.log('Production DB Connected!')
-    })
-    .catch((err) => {
-      console.log('Production DB Not Connected!')
-      console.log({ Error_Message: err })
-    })
-}
+// Check DB connection (MongoDB)
+connectMongo()
+  .then(async () => {
+    console.log(`${mode} MongoDB Connected!`)
+    try {
+      await bootstrapMongo({ seed: mode === 'development' })
+      console.log('MongoDB collections ensured and optional seed applied')
+    } catch (seedErr) {
+      console.log('MongoDB bootstrap failed:', seedErr?.message || seedErr)
+    }
+  })
+  .catch((err) => {
+    console.log(`${mode} MongoDB Not Connected!`)
+    console.log({ Error_Message: err?.message || err })
+  })
 
 app.use('/', routes)
 

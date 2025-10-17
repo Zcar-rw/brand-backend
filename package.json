@@ -15,7 +15,8 @@
     "db:generate:table": "./node_modules/.bin/sequelize sequelize db:migration:generate --name",
     "db:seed": "./node_modules/.bin/sequelize db:seed:all",
     "db:migrate:undo:all": "./node_modules/.bin/sequelize db:migrate:undo:all",
-    "db:seed:undo:all": "./node_modules/.bin/sequelize db:seed:undo:all"
+    "db:seed:undo:all": "./node_modules/.bin/sequelize db:seed:undo:all",
+    "mongo:seed": "babel-node src/database/mongoose/seed.js"
   },
   "dependencies": {
     "@babel/cli": "^7.19.3",
@@ -44,6 +45,7 @@
     "joi": "^17.8.4",
     "jsonwebtoken": "^8.5.1",
     "lodash": "^4.17.21",
+    "mongoose": "^8.19.1",
     "morgan": "^1.9.1",
     "multer": "^1.4.1",
     "multer-storage-cloudinary": "^2.2.1",
