@@ -8,7 +8,6 @@ async function seed() {
   const models = (await import('./index')).default;
   const Role = models.Role;
   const User = models.User;
-  const Owner = models.Owner;
   const CarType = models.CarType;
   const CarMake = models.CarMake;
 
@@ -58,26 +57,6 @@ async function seed() {
     }
   }
   console.log('MongoDB seed complete.');
-
-  // Seed a dummy owner (individual) without linking to a user
-  try {
-    const email = 'owner@example.com';
-    const existingOwner = await Owner.findOne({ email });
-    if (!existingOwner) {
-      await Owner.create({
-        type: 'individual',
-        verified: true,
-        status: 'active',
-        name: 'Olivia Owner',
-        phone: '+250788000000',
-        email,
-        address: 'Kigali, Rwanda',
-      });
-      console.log('Seeded dummy owner for', email);
-    }
-  } catch (e) {
-    console.warn('Failed to seed dummy owner:', e?.message || e);
-  }
 
   // Seed suppliers
   const Supplier = models.Supplier;

@@ -39,7 +39,6 @@ export async function bootstrapMongo({ seed = false } = {}) {
     'Inquiry',
     'ResetPassword',
     'VerifyEmail',
-    'Owner',
     'DiscountTier',
   ]
 
