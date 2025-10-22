@@ -1,21 +1,19 @@
-import db from './../models';
-const Sequelize = require('sequelize');
-/**
- * @param {object} modal
- * @returns {object} an object containing the information of the user or null
- */
+import mongoModels, { initMongoModels } from '../mongoose'
+import { toPopulate } from '../mongoose/utils'
+import { withGet } from './utils'
 
 export default async (Model, condition = {}, include = []) => {
-  try {
-    const response = await db[Model].findOne(
-      {
-        where: condition,
-        include,
-      },
-      { logging: false },
-    );
-    return response || {};
-  } catch (error) {
-    return error;
+  await initMongoModels()
+  const M = mongoModels[Model]
+  if (!M) throw new Error(`Mongo model not registered for ${Model}`)
+  
+  // Map 'id' to '_id' for Mongoose compatibility
+  const queryCondition = { ...condition }
+  if (queryCondition.id !== undefined) {
+    queryCondition._id = queryCondition.id
+    delete queryCondition.id
   }
-};
+  
+  const doc = await M.findOne(queryCondition).populate(toPopulate(include))
+  return doc ? withGet(doc.toObject({ virtuals: true })) : {}
+}

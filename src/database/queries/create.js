@@ -1,4 +1,5 @@
-import db from '../models';
+import mongoModels, { initMongoModels } from '../mongoose'
+import { withGet } from './utils'
 
 /**
  * @param {object} modal
@@ -6,6 +7,9 @@ import db from '../models';
  */
 
 export default async (Model, data = {}) => {
-  const response = await db[Model].create(data, { logging: false });
-  return response && response.get();
-};
+  await initMongoModels()
+  const M = mongoModels[Model]
+  if (!M) throw new Error(`Mongo model not registered for ${Model}`)
+  const doc = await M.create(data)
+  return withGet(doc?.toObject({ virtuals: true }))
+}

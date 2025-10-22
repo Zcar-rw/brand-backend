@@ -72,5 +72,27 @@ router.get(
   verifyToken,
   asyncHandler(CarsController.getCarsBySupplier),
 )
+router.patch(
+  '/:carId/assign-owner',
+  verifyToken,
+  isAdmin,
+  asyncHandler(CarsController.assignCarToOwner),
+);
+router.patch(
+  '/:carId/unassign-owner',
+  verifyToken,
+  isAdmin,
+  asyncHandler(CarsController.unassignCarFromOwner),
+);
+router.get(
+  '/created-by-me',
+  verifyToken,
+  asyncHandler(CarsController.getCarsByCreatedBy),
+);
+router.get(
+  '/:carId/discount-tiers',
+  verifyToken,
+  asyncHandler(CarsController.getCarDiscountTiers),
+);
 
 export default router;

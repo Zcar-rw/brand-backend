@@ -287,12 +287,14 @@ export default class UserController {
           userId: null,
           type: 'company',
         });
+        // Owner model removed - ownership tracked via User role 'car-owner'
       } else {
         const customer = await Create('Customer', {
           companyId: null,
           userId: response.id,
           type: 'individual',
         });
+        // Owner model removed - ownership tracked via User role 'car-owner'
       }
 
       // SEND EMAIL TO ACTIVATE THE ACCOUNT

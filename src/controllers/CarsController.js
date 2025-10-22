@@ -12,53 +12,68 @@ import {
   Search,
   FindAll,
   FindAndCount,
+  FindOne,
 } from '../database/queries';
 
 export default class CarsController {
   static async createCar(req, res) {
     const data = {
       ...req.body,
-      status: 'active',
-      createdBy: req.body.userId,
+      status: req.body.status || 'active',
+      createdBy: req.user?.id || req.body.userId,
       plateNumber: req.body.plateNumber.toUpperCase(),
     };
-    // data.ownerId = req.user.user.id;
-    // data.typeId = req.body.brandType;
-    // data.carMakeId = req.body.brandName;
-
-    // const { carMakeName } = await CarServices.getCarMakeNameByCarMakeId(
-    //   req.body.brandName
-    // );
-
-    // data.name = carMakeName;
 
     try {
-      // 1. Check if platenumber's or VIN's car exist
-      // const isPlateNumberExist = await CarServices.getCarByPlateNumber(
-      //   data.plateNumber
-      // );
+      // 1. Validate plate number format (Rwandan format: RXX###X)
+      const plateRegex = /^R[A-Z]{2}\d{3}[A-Z]$/;
+      if (!plateRegex.test(data.plateNumber)) {
+        return res.status(status.BAD_REQUEST).json({
+          error: 'Invalid plate number format. Use RXX###X (e.g., RAA001A)',
+        });
+      }
 
-      // if (isPlateNumberExist) {
-      //   return res.status(status.EXIST).json({
-      //     error: 'Car of this plate number or VIN is already exists',
-      //   });
-      // }
+      // 2. Check if plate number already exists
+      const existingCar = await db.Car.findOne({ where: { plateNumber: data.plateNumber } });
+      if (existingCar) {
+        return res.status(status.CONFLICT).json({
+          error: 'A car with this plate number already exists',
+        });
+      }
 
-      // 2. Create a Car
+      // 3. Create the car
       const response = await Create('Car', data);
 
-      // 3. create a CarMeta
-      // data.year = req.body.year;
+      // 4. Create default discount tiers if baseAmount is provided
+      if (response && response.id && data.baseAmount) {
+        const discountTiers = [
+          { minDays: 1, maxDays: 1, discountPercent: 0 },      // 1 day = 0%
+          { minDays: 2, maxDays: 7, discountPercent: 20 },     // 2-7 days = 20%
+          { minDays: 8, maxDays: 14, discountPercent: 30 },    // 8-14 days = 30%
+          { minDays: 15, maxDays: null, discountPercent: 40 }, // 15+ days = 40%
+        ];
+
+        for (const tier of discountTiers) {
+          await Create('DiscountTier', {
+            carId: response.id,
+            ...tier,
+            status: 'active',
+          });
+        }
+      }
 
       return response && response.errors
         ? res.status(status.BAD_REQUEST).send({
-            error: 'Sorry, you can not create a car right now, try again later',
+            error: 'Sorry, you cannot create a car right now, try again later',
           })
         : res.status(status.CREATED).json({
             response,
           });
     } catch (error) {
-      return res.status(status.BAD_REQUEST).json();
+      console.error('Error creating car:', error);
+      return res.status(status.BAD_REQUEST).json({
+        error: error?.message || 'Failed to create car',
+      });
     }
   }
 
@@ -435,6 +450,186 @@ export default class CarsController {
         response,
       });
     } catch (error) {
+      return res.status(status.BAD_REQUEST).send({
+        error: 'Cars not found at this moment, try again later',
+      });
+    }
+  }
+
+  static async assignCarToOwner(req, res) {
+    try {
+      const { carId } = req.params;
+      const { ownerId } = req.body;
+
+      console.log('Attempting to assign car:', { carId, ownerId, params: req.params, body: req.body });
+      
+      if (!ownerId) {
+        return res.status(status.BAD_REQUEST).json({
+          error: 'Owner ID is required',
+        });
+      }
+      
+      // 1. Check if car exists (using FindOne from queries which works with Mongoose)
+      const car = await FindOne('Car', { _id: carId });
+      console.log('Car found for assignment:', car);
+      if (!car || !car.id) {
+        return res.status(status.NOT_FOUND).json({
+          error: 'Car not found',
+        });
+      }
+      
+      // 2. Check if car is already assigned to an owner
+      if (car.ownerId) {
+        return res.status(status.CONFLICT).json({
+          error: 'This car is already assigned to another owner',
+        });
+      }
+
+      // 3. Check if owner exists (User with given id)
+      const owner = await FindOne('User', { _id: ownerId });
+      if (!owner || !owner.id) {
+        return res.status(status.NOT_FOUND).json({
+          error: 'Owner not found',
+        });
+      }
+
+      // 4. Assign car to owner
+      const response = await Update('Car', { ownerId }, { _id: carId });
+
+      return res.status(status.OK).json({
+        response,
+        message: 'Car successfully assigned to owner',
+      });
+    } catch (error) {
+      console.error('Error assigning car to owner:', error);
+      return res.status(status.BAD_REQUEST).json({
+        error: 'Failed to assign car to owner',
+      });
+    }
+  }
+
+  static async unassignCarFromOwner(req, res) {
+    try {
+      const { carId } = req.params;
+
+      // 1. Check if car exists
+      const car = await FindOne('Car', { _id: carId });
+      if (!car || !car.id) {
+        return res.status(status.NOT_FOUND).json({
+          error: 'Car not found',
+        });
+      }
+
+      // 2. Check if car is assigned
+      if (!car.ownerId) {
+        return res.status(status.BAD_REQUEST).json({
+          error: 'This car is not assigned to any owner',
+        });
+      }
+
+      // 3. Unassign car from owner
+      const response = await Update('Car', { ownerId: null }, { _id: carId });
+
+      return res.status(status.OK).json({
+        response,
+        message: 'Car successfully unassigned from owner',
+      });
+    } catch (error) {
+      console.error('Error unassigning car from owner:', error);
+      return res.status(status.BAD_REQUEST).json({
+        error: 'Failed to unassign car from owner',
+      });
+    }
+  }
+
+  static async getCarDiscountTiers(req, res) {
+    try {
+      const { carId } = req.params;
+
+      const { response } = await FindAll('DiscountTier', { carId }, []);
+      
+      return res.status(status.OK).json({
+        response: response || [],
+      });
+    } catch (error) {
+      console.error('Error fetching discount tiers:', error);
+      return res.status(status.BAD_REQUEST).json({
+        error: 'Failed to fetch discount tiers',
+      });
+    }
+  }
+
+  static async getCarsByCreatedBy(req, res) {
+    try {
+      let { page, limit } = req.query;
+
+      if (!page) {
+        return res.status(status.BAD_REQUEST).send({
+          response: [],
+          error: 'Sorry, pagination parameters are required[page, limit]',
+        });
+      }
+
+      limit = limit || 10;
+      const offset = page === 1 ? 0 : (parseInt(page, 10) - 1) * limit;
+
+      // Get the user ID from the authenticated user (req.user set by verifyToken middleware)
+      const createdBy = req.user.id;
+
+      const include = [
+        {
+          model: db.CarModel,
+          as: 'carModel',
+          attributes: { exclude: ['createdAt', 'updatedAt'] },
+          include: [
+            {
+              model: db.CarMake,
+              as: 'carMake',
+              attributes: { exclude: ['createdAt', 'updatedAt'] },
+            },
+            {
+              model: db.CarType,
+              as: 'carType',
+              attributes: { exclude: ['createdAt', 'updatedAt'] },
+            },
+          ],
+        },
+        {
+          model: db.Supplier,
+          as: 'supplier',
+          attributes: { exclude: ['createdAt', 'updatedAt', 'createdBy', 'tin'] },
+        },
+      ];
+
+      const { response, meta } = await FindAndCount(
+        'Car',
+        { createdBy },
+        include,
+        limit,
+        offset,
+      );
+
+      if (response && !response.length) {
+        return res.status(status.OK).send({
+          response: [],
+          meta: {
+            total: 0,
+            pages: 0,
+            currentPage: parseInt(page, 10),
+          },
+        });
+      }
+
+      return res.status(status.OK).json({
+        response,
+        meta: helper.generator.meta(
+          meta.count,
+          limit,
+          parseInt(page, 10) || 1,
+        ),
+      });
+    } catch (error) {
+      console.error('Error fetching cars by creator:', error);
       return res.status(status.BAD_REQUEST).send({
         error: 'Cars not found at this moment, try again later',
       });

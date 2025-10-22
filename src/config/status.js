@@ -13,5 +13,6 @@ export default {
   EXIST: 409,
   SERVER_ERROR: 500,
   NOT_MODIFIED: 304,
-  REDIRECT: 302
+  REDIRECT: 302,
+  CONFLICT: 409
 };

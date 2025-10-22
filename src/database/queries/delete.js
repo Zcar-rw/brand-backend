@@ -1,5 +1,4 @@
-import db from '../models';
-import { Op } from 'sequelize';
+import mongoModels, { initMongoModels } from '../mongoose'
 
 /**
  * @param {object} modal
@@ -7,12 +6,17 @@ import { Op } from 'sequelize';
  */
 
 export default async (Model, where) => {
-  try {
-    const response = await db[Model].destroy({
-      where,
-    });
-    return { response };
-  } catch (error) {
-    return error;
+  await initMongoModels()
+  const M = mongoModels[Model]
+  if (!M) throw new Error(`Mongo model not registered for ${Model}`)
+  
+  // Map 'id' to '_id' for Mongoose compatibility
+  const queryCondition = { ...where }
+  if (queryCondition.id !== undefined) {
+    queryCondition._id = queryCondition.id
+    delete queryCondition.id
   }
-};
+  
+  const res = await M.deleteMany(queryCondition)
+  return { response: res.deletedCount }
+}
