@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import status from '../config/status';
-import { FindAll } from '../database/queries';
+import { FindAll, Create } from '../database/queries';
+import generateErrorResponse from '../helpers/generateErrorResponse';
 
 /**
  * A class to handle cars
@@ -29,5 +30,38 @@ export default class CarMakesController {
           meta,
           response,
         });
+  }
+
+  static async createMake(req, res) {
+    try {
+      const { name, slug, photo, popular } = req.body
+      // derive slug if not provided (simple slugifier without uniqid)
+      const derivedSlug = slug
+        ? String(slug).toLowerCase()
+        : String(name)
+            .toLowerCase()
+            .trim()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/(^-|-$)/g, '')
+
+      const payload = {
+        name,
+        slug: derivedSlug,
+        photo,
+        popular: Boolean(popular),
+      }
+
+      const response = await Create('CarMake', payload)
+      if (response && response.errors) {
+        return res.status(status.BAD_REQUEST).send({
+          error: 'Sorry, you cannot create a car make right now. Try again later',
+        })
+      }
+      return res.status(status.CREATED).json({ response })
+    } catch (error) {
+      // handle duplicate slug/email, etc.
+      const errMsg = generateErrorResponse(error, res)
+      return res.status(status.BAD_REQUEST).send({ error: errMsg })
+    }
   }
 }

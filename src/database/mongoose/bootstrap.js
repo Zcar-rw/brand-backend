@@ -1,7 +1,7 @@
 import mongoose from '../mongo'
 import { connectMongo } from '../mongo'
 import { v4 as uuidv4 } from 'uuid'
-import '../../helpers/password'
+import * as helper from '../../helpers'
 
 // Import registering side-effects after connection
 async function registerModels() {
@@ -37,6 +37,10 @@ export async function bootstrapMongo({ seed = false } = {}) {
     'PriceList',
     'Notification',
     'Inquiry',
+    'ResetPassword',
+    'VerifyEmail',
+    'Owner',
+    'DiscountTier',
   ]
 
   // Ensure collections exist
@@ -61,8 +65,27 @@ export async function bootstrapMongo({ seed = false } = {}) {
       { _id: uuidv4(), name: 'cooperate-user', label: 'Cooperate user', type: 'cooperate' },
       { _id: uuidv4(), name: 'client', label: 'Client', type: 'client' },
       { _id: uuidv4(), name: 'agent', label: 'Agent', type: 'agent' },
+      { _id: uuidv4(), name: 'car-owner', label: 'Car Owner', type: 'owner' },
     ]
     await Role.insertMany(roles)
+  }
+
+  // Seed car types and car makes when requested or if empty
+  const CarType = mongoose.models.CarType
+  const CarMake = mongoose.models.CarMake
+  if (CarType && CarMake && (seed || (await CarType.countDocuments()) === 0 || (await CarMake.countDocuments()) === 0)) {
+    const { default: carTypes } = await import('./data/carTypes.js')
+    const { default: carMakes } = await import('./data/carMakes.js')
+
+    // Upsert car types by slug
+    for (const t of carTypes) {
+      await CarType.updateOne({ slug: t.slug }, { $set: t }, { upsert: true })
+    }
+
+    // Upsert car makes by slug
+    for (const m of carMakes) {
+      await CarMake.updateOne({ slug: m.slug }, { $set: m }, { upsert: true })
+    }
   }
 
   // Seed admin user if env present and user missing
@@ -73,7 +96,7 @@ export async function bootstrapMongo({ seed = false } = {}) {
       const exists = await User.findOne({ email: ADMIN_EMAIL })
       if (!exists) {
         // Lazy import to avoid circular imports
-        const { default: helper } = await import('../../helpers/index.js')
+        // const { default: helper } = await import('../../helpers/index.js')
         const hashed = helper.password.hash(ADMIN_PASSWORD)
         await User.create({
           _id: uuidv4(),

@@ -6,6 +6,7 @@ const CarSchema = new Schema(
   {
     _id: { type: String, default: uuidv4 },
     plateNumber: { type: String, required: true, unique: true },
+    ownerId: { type: String, ref: 'Owner' },
     supplierId: { type: String, ref: 'Supplier' },
     modelId: { type: String, ref: 'CarModel', required: true },
     amount: { type: Number },
@@ -27,6 +28,12 @@ CarSchema.virtual('user', {
 CarSchema.virtual('supplier', {
   ref: 'Supplier',
   localField: 'supplierId',
+  foreignField: '_id',
+  justOne: true,
+})
+CarSchema.virtual('owner', {
+  ref: 'Owner',
+  localField: 'ownerId',
   foreignField: '_id',
   justOne: true,
 })

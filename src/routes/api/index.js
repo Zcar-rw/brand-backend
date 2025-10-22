@@ -14,6 +14,7 @@ import booking from './booking';
 import priceList from './priceList';
 import schedule from './schedule';
 import invoice from './invoice';
+import owners from './owners';
 
 const router = express.Router();
 
@@ -32,5 +33,6 @@ router.use('/booking', booking);
 router.use('/priceList', priceList);
 router.use('/schedule', schedule);
 router.use('/invoice', invoice);
+router.use('/owners', owners);
 
 export default router;

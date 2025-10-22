@@ -90,15 +90,33 @@ export default class CarTypesController {
           error: 'Sorry, car type not found!',
         });
       }
-      const response = await Create('CarModel', data);
-      return response && response.errors
-        ? res.status(status.BAD_REQUEST).send({
-            error:
-              'Sorry, you can not create a car model right now, try again later',
-          })
-        : res.status(status.CREATED).json({
-            response,
-          });
+      const createdModel = await Create('CarModel', data);
+      
+      if (createdModel && createdModel.errors) {
+        return res.status(status.BAD_REQUEST).send({
+          error:
+            'Sorry, you can not create a car model right now, try again later',
+        });
+      }
+      
+      // Fetch the created model with populated relations
+      const include = [
+        {
+          model: db.CarType,
+          as: 'carType',
+          attributes: { exclude: ['createdAt', 'updatedAt'] },
+        },
+        {
+          model: db.CarMake,
+          as: 'carMake',
+          attributes: { exclude: ['createdAt', 'updatedAt'] },
+        },
+      ];
+      const response = await FindOne('CarModel', { id: createdModel.id }, include);
+      
+      return res.status(status.CREATED).json({
+        response,
+      });
     } catch (error) {
       generateErrorResponse(error, res);
       return res.status(status.BAD_REQUEST).send({

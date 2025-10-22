@@ -7,7 +7,7 @@ const RoleSchema = new Schema(
     _id: { type: String, default: uuidv4 },
     name: { type: String, required: true },
     label: { type: String, required: true },
-    type: { type: String, enum: ['internal', 'cooperate', 'client', 'agent'], default: 'internal' },
+    type: { type: String, enum: ['internal', 'cooperate', 'client', 'agent', 'owner'], default: 'internal' },
   },
   { timestamps: false, versionKey: false }
 )

@@ -40,8 +40,9 @@ connectMongo()
   .then(async () => {
     console.log(`${mode} MongoDB Connected!`)
     try {
-      await bootstrapMongo({ seed: mode === 'development' })
-      console.log('MongoDB collections ensured and optional seed applied')
+       // Initialize Mongo collections and indexes without auto-seeding
+      await bootstrapMongo({ seed: false })
+      console.log('MongoDB collections ensured (no auto-seed)')
     } catch (seedErr) {
       console.log('MongoDB bootstrap failed:', seedErr?.message || seedErr)
     }

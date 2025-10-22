@@ -5,7 +5,7 @@ import otp from 'generate-otp';
 import * as helper from '../helpers';
 import * as template from '../templates';
 import status from '../config/status';
-import { Create, FindOne, Delete } from '../database/queries';
+import { Create, FindOne, Delete, Update } from '../database/queries';
 import { ActivitiesServices, NotificationServices } from '../services';
 /**
  * A class to handle user local authentication

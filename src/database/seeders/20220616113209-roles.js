@@ -60,6 +60,15 @@ const roles = [
     createdAt: new Date(),
     updatedAt: new Date(),
   },
+  // OWNER
+  {
+    id: uuidv4(),
+    name: 'car-owner',
+    label: 'Car Owner',
+    type: 'owner',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
 ];
 
 export default {
