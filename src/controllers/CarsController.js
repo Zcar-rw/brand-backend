@@ -485,8 +485,8 @@ export default class CarsController {
         });
       }
 
-      // 3. Check if owner exists
-      const owner = await FindOne('Owner', { _id: ownerId });
+      // 3. Check if owner exists (User with given id)
+      const owner = await FindOne('User', { _id: ownerId });
       if (!owner || !owner.id) {
         return res.status(status.NOT_FOUND).json({
           error: 'Owner not found',

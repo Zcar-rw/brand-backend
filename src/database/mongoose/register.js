@@ -17,7 +17,7 @@ import './models/Inquiry'
 import './models/ResetPassword'
 import './models/VerifyEmail'
 import './models/Car'
-import './models/Owner'
+// Owner model removed - using User with 'car-owner' role instead
 import './models/DiscountTier'
 
 export {}

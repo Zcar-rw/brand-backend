@@ -9,6 +9,14 @@ export default async (Model, where) => {
   await initMongoModels()
   const M = mongoModels[Model]
   if (!M) throw new Error(`Mongo model not registered for ${Model}`)
-  const res = await M.deleteMany(where)
+  
+  // Map 'id' to '_id' for Mongoose compatibility
+  const queryCondition = { ...where }
+  if (queryCondition.id !== undefined) {
+    queryCondition._id = queryCondition.id
+    delete queryCondition.id
+  }
+  
+  const res = await M.deleteMany(queryCondition)
   return { response: res.deletedCount }
 }

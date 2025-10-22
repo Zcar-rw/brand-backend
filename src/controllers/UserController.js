@@ -287,24 +287,14 @@ export default class UserController {
           userId: null,
           type: 'company',
         });
-        // Create Owner profile (company owner)
-        await Create('Owner', {
-          userId: response.id,
-          type: 'company',
-          verified: false,
-        })
+        // Owner model removed - ownership tracked via User role 'car-owner'
       } else {
         const customer = await Create('Customer', {
           companyId: null,
           userId: response.id,
           type: 'individual',
         });
-        // Create Owner profile for individual
-        await Create('Owner', {
-          userId: response.id,
-          type: 'individual',
-          verified: false,
-        })
+        // Owner model removed - ownership tracked via User role 'car-owner'
       }
 
       // SEND EMAIL TO ACTIVATE THE ACCOUNT

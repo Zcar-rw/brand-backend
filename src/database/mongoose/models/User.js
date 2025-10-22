@@ -12,6 +12,8 @@ const UserSchema = new Schema(
     phoneNumber: { type: String },
     photo: { type: String },
     password: { type: String, required: true },
+    // Classify car owners as individual or company
+    ownerType: { type: String, enum: ['individual', 'company'], default: 'individual' },
     status: { type: String, enum: ['active', 'inactive', 'pending'], default: 'pending' },
     roleId: { type: String, ref: 'Role', required: true },
     verified: { type: Boolean, default: false },
