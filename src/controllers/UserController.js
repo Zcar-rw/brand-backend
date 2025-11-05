@@ -16,7 +16,7 @@ import generateErrorResponse from '../helpers/generateErrorResponse';
 //  */
 export default class UserController {
   static async getAllUsers(req, res) {
-    let { page, limit } = req.query;
+    let { page, limit, role } = req.query;
     if (!page) {
       return res.status(status.BAD_REQUEST).send({
         response: [],
@@ -39,7 +39,17 @@ export default class UserController {
       //   attributes: { exclude: ['createdAt', 'updatedAt'] },
       // },
     ];
+    
+    // Build condition object with role filter if provided
     const condition = {};
+    if (role) {
+      // Find the role by type
+      const roleRecord = await FindOne('Role', { type: role });
+      if (roleRecord && roleRecord.id) {
+        condition.roleId = roleRecord.id;
+      }
+    }
+    
     const { response, meta } = await FindAndCount(
       'User',
       condition,
@@ -50,7 +60,7 @@ export default class UserController {
     if (response && !response.length) {
       return res.status(status.NO_CONTENT).send({
         response: [],
-        error: 'Sorry, No booking found!',
+        error: 'Sorry, No users found!',
       });
     }
     return response && response.errors
@@ -76,20 +86,20 @@ export default class UserController {
       });
     }
 
-    limit = limit || 5;
+    limit = limit || 100;
     const offset = page === 1 ? 0 : (parseInt(page, 10) - 1) * limit;
 
     const include = [
-      // {
-      //   model: db.Role,
-      //   as: 'role',
-      //   attributes: { exclude: ['createdAt', 'updatedAt'] },
-      // },
-      // {
-      //   model: db.Customer,
-      //   as: 'customer',
-      //   attributes: { exclude: ['createdAt', 'updatedAt'] },
-      // },
+      {
+        model: db.User,
+        as: 'user',
+        attributes: ['id', 'firstName', 'lastName', 'email'],
+      },
+      {
+        model: db.Company,
+        as: 'company',
+        attributes: ['id', 'name'],
+      },
     ];
     const condition = {};
     const { response, meta } = await FindAndCount(
@@ -102,12 +112,12 @@ export default class UserController {
     if (response && !response.length) {
       return res.status(status.NO_CONTENT).send({
         response: [],
-        error: 'Sorry, No booking found!',
+        error: 'Sorry, No customers found!',
       });
     }
     return response && response.errors
       ? res.status(status.BAD_REQUEST).send({
-          error: 'Users can not be retrieved at this moment, try again later',
+          error: 'Customers can not be retrieved at this moment, try again later',
         })
       : res.status(status.OK).json({
           response,
@@ -180,6 +190,13 @@ export default class UserController {
     const { firstName, lastName, email, phoneNumber, roleId } = req.body;
     const password = '12345678'; // TODO: WILL CHANGE THIS LATER
     try {
+      // Prevent creating admin users via this endpoint
+      const role = await FindOne('Role', { id: roleId });
+      if (!role || role.name === 'admin') {
+        return res.status(status.BAD_REQUEST).send({
+          error: 'Invalid role selection',
+        });
+      }
       // TODO: REGISTER USER
       const newPassword = helper.password.hash(password);
       const response = await Create('User', {
@@ -208,6 +225,13 @@ export default class UserController {
     const password = '12345678'; // TODO: WILL CHANGE THIS LATER
 
     try {
+      // Guard against admin role
+      const role = await FindOne('Role', { id: roleId });
+      if (!role || role.name === 'admin') {
+        return res.status(status.BAD_REQUEST).send({
+          error: 'Invalid role selection',
+        });
+      }
       const newPassword = helper.password.hash(password);
       const response = await Create('User', {
         password: newPassword,
@@ -298,8 +322,8 @@ export default class UserController {
       }
 
       // SEND EMAIL TO ACTIVATE THE ACCOUNT
-      const message = 'Welcome to Kale.';
-      const subject = 'Activate your Kale account';
+      const message = 'Welcome to ZCar.';
+      const subject = 'Activate your ZCar account';
       await helper.mailer(message, subject, email);
 
       return res

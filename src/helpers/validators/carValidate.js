@@ -3,7 +3,7 @@ import Joi from 'joi';
 const schema = {
   onCarCreate: Joi.object({
     modelId: Joi.string().required(),
-    supplierId: Joi.string().required(),
+    ownerId: Joi.string().optional().empty(''),
     amount: Joi.number().required(),
     baseAmount: Joi.number().required(),
     // carMakeId: Joi.string().required(),
@@ -17,7 +17,7 @@ const carValidations = {
   carCreation(req, res, next) {
     const { error } = schema.onCarCreate.validate({
       modelId: req.body.modelId,
-      supplierId: req.body.supplierId,
+      ownerId: req.body.ownerId,
       amount: req.body.amount,
       baseAmount: req.body.baseAmount,
       // carMakeId: req.body.carMakeId,

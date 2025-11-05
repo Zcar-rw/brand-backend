@@ -71,7 +71,7 @@ export default class AuthLocalController {
 
         await NotificationServices.saveNotification(
           user.id,
-          `Dear ${user.firstName}, Welcome back to Kale!`,
+          `Dear ${user.firstName}, Welcome back to ZCar!`,
           'account',
         );
         return (

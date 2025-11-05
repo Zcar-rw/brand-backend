@@ -21,7 +21,7 @@ export default (message) => {
       </div>
       <br>
       <div>Best regards,<br></div>
-      <b>Kale Team</b>
+      <b>ZCar Team</b>
       </div>
       <!-- end body   -->
       </div>
@@ -30,7 +30,7 @@ export default (message) => {
         <div style="max-width:720px;margin: 0 auto;">
           <div style="padding: 0 20px">
             Copyright, 2024<br>
-            Kale , All right reserved.
+            ZCar , All right reserved.
           </div>
         </div>
       </div>

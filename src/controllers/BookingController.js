@@ -16,6 +16,178 @@ import bookingStatus from '../config/bookingStatus';
 
 dotenv.config();
 export default class BookingController {
+  static async createBookingByPlate(req, res) {
+    try {
+      const {
+        userId, // admin creating
+        clientUserId, // Client user ID - will find or create customer
+        carId, // Use carId instead of plateNumber
+        service,
+        comment,
+        date,
+        dates,
+        startDate,
+        endDate,
+        pickupLocation,
+        dropoffLocation,
+        pickupTime,
+        dropoffTime,
+      } = req.body;
+
+      // Resolve car by ID
+      const car = await FindOne(
+        'Car',
+        { id: carId },
+        [
+          {
+            model: db.CarModel,
+            as: 'carModel',
+            attributes: { exclude: ['createdAt', 'updatedAt'] },
+            include: [
+              {
+                model: db.CarType,
+                as: 'carType',
+                attributes: { exclude: ['createdAt', 'updatedAt'] },
+              },
+            ],
+          },
+          {
+            model: db.User,
+            as: 'owner',
+            attributes: ['id', 'firstName', 'lastName', 'email'],
+          },
+        ],
+      );
+      if (!car || Object.keys(car).length === 0) {
+        return res.status(status.BAD_REQUEST).json({
+          status: 'error',
+          message: 'Car not found',
+        });
+      }
+      if (!car?.carModel?.typeId) {
+        return res.status(status.BAD_REQUEST).json({
+          status: 'error',
+          message: 'Car model/type association missing for selected car',
+        });
+      }
+
+      // Verify client user exists
+      const clientUser = await FindOne('User', { id: clientUserId }, [
+        {
+          model: db.Role,
+          as: 'role',
+          attributes: { exclude: ['createdAt', 'updatedAt'] },
+        },
+      ]);
+      if (!clientUser || Object.keys(clientUser).length === 0) {
+        return res.status(status.BAD_REQUEST).json({
+          status: 'error',
+          message: 'Client user not found',
+        });
+      }
+
+      // Find or create Customer for this user
+      let customer = await FindOne('Customer', { userId: clientUserId });
+      if (!customer || Object.keys(customer).length === 0) {
+        customer = await Create('Customer', {
+          userId: clientUserId,
+          companyId: null,
+          type: 'individual',
+          status: 'active',
+        });
+      }
+
+      // Determine number of days and pricing
+      let datesToCreate = [];
+      if (Array.isArray(dates) && dates.length > 0) {
+        datesToCreate = dates;
+      } else if (startDate && endDate) {
+        const start = moment(startDate).startOf('day');
+        const end = moment(endDate).startOf('day');
+        const cursor = start.clone();
+        while (cursor.isSameOrBefore(end)) {
+          datesToCreate.push(cursor.clone().toDate());
+          cursor.add(1, 'day');
+        }
+      } else if (date) {
+        datesToCreate = [date];
+      }
+
+      const days = Math.max(1, datesToCreate.length || 1);
+      // Coerce amount values to numbers in case they arrive as strings
+      const baseDaily = Number(
+        car?.amount !== undefined && car?.amount !== null
+          ? car.amount
+          : car?.baseAmount !== undefined && car?.baseAmount !== null
+            ? car.baseAmount
+            : 0,
+      );
+      // Discount tiers
+      let discount = 0; // 0% for 1 day
+      if (days >= 2 && days <= 7) discount = 0.20;
+      else if (days >= 8 && days <= 14) discount = 0.30;
+      else if (days >= 15) discount = 0.40;
+
+      const dailyAfterDiscount = Math.max(0, baseDaily * (1 - discount));
+      const totalPrice = Math.round(dailyAfterDiscount * days);
+
+      // Create booking (store both clientId for direct user reference and customerId for compatibility)
+      const booking = await Create('Booking', {
+        createdBy: userId,
+        customerId: customer.id,
+        clientId: clientUserId,
+        carId: car.id,
+        service,
+        comment,
+        status: 'pending',
+        totalPrice,
+      });
+      if (!booking) {
+        return res.status(status.BAD_REQUEST).json({
+          status: 'error',
+          message: 'Booking creation failed',
+        });
+      }
+
+      // Create booking details per day with derived carType from car's model
+      for (const d of datesToCreate) {
+        await Create('BookingDetail', {
+          bookingId: booking.id,
+          carType: car.carModel.typeId,
+          date: moment(d).startOf('day').toDate(),
+          pickupLocation,
+          dropoffLocation,
+          pickupTime,
+          dropoffTime,
+          price: dailyAfterDiscount,
+        });
+      }
+
+      return res.status(status.CREATED).json({
+        status: 'success',
+        message: 'Booking created successfully',
+        data: booking,
+        car: {
+          id: car.id,
+          plateNumber: car.plateNumber,
+          model: car.carModel?.name,
+          type: car.carModel?.carType?.name,
+          photo: car.carModel?.photo,
+          owner: car.owner ? {
+            id: car.owner.id,
+            name: `${car.owner.firstName} ${car.owner.lastName}`,
+            email: car.owner.email,
+          } : null,
+        },
+      });
+    } catch (error) {
+      console.error('Booking creation by plate error:', error);
+      return res.status(status.INTERNAL_SERVER_ERROR).json({
+        status: 'error',
+        message: 'An error occurred while creating the booking by plate.',
+      });
+    }
+  }
   static async createBooking(req, res) {
     try {
       const {
@@ -260,12 +432,51 @@ export default class BookingController {
               as: 'company',
               attributes: { exclude: ['createdAt', 'updatedAt'] },
             },
+            {
+              model: db.User,
+              as: 'user',
+              attributes: { exclude: ['createdAt', 'updatedAt'] },
+            },
           ],
+        },
+        {
+          model: db.User,
+          as: 'client',
+          attributes: { exclude: ['createdAt', 'updatedAt', 'password'] },
         },
         {
           model: db.User,
           as: 'user',
           attributes: { exclude: ['createdAt', 'updatedAt'] },
+        },
+        {
+          model: db.Car,
+          as: 'car',
+          attributes: { exclude: ['createdAt', 'updatedAt'] },
+          include: [
+            {
+              model: db.User,
+              as: 'owner',
+              attributes: ['id', 'firstName', 'lastName', 'email'],
+            },
+            {
+              model: db.CarModel,
+              as: 'carModel',
+              attributes: { exclude: ['createdAt', 'updatedAt'] },
+              include: [
+                {
+                  model: db.CarType,
+                  as: 'carType',
+                  attributes: { exclude: ['createdAt', 'updatedAt'] },
+                },
+                {
+                  model: db.CarMake,
+                  as: 'carMake',
+                  attributes: { exclude: ['createdAt', 'updatedAt'] },
+                },
+              ],
+            },
+          ],
         },
         {
           model: db.BookingDetail,
@@ -352,12 +563,51 @@ export default class BookingController {
               as: 'company',
               attributes: { exclude: ['createdAt', 'updatedAt'] },
             },
+            {
+              model: db.User,
+              as: 'user',
+              attributes: { exclude: ['createdAt', 'updatedAt'] },
+            },
           ],
+        },
+        {
+          model: db.User,
+          as: 'client',
+          attributes: { exclude: ['createdAt', 'updatedAt', 'password'] },
         },
         {
           model: db.User,
           as: 'user',
           attributes: { exclude: ['createdAt', 'updatedAt'] },
+        },
+        {
+          model: db.Car,
+          as: 'car',
+          attributes: { exclude: ['createdAt', 'updatedAt'] },
+          include: [
+            {
+              model: db.User,
+              as: 'owner',
+              attributes: ['id', 'firstName', 'lastName', 'email'],
+            },
+            {
+              model: db.CarModel,
+              as: 'carModel',
+              attributes: { exclude: ['createdAt', 'updatedAt'] },
+              include: [
+                {
+                  model: db.CarType,
+                  as: 'carType',
+                  attributes: { exclude: ['createdAt', 'updatedAt'] },
+                },
+                {
+                  model: db.CarMake,
+                  as: 'carMake',
+                  attributes: { exclude: ['createdAt', 'updatedAt'] },
+                },
+              ],
+            },
+          ],
         },
         {
           model: db.BookingDetail,
@@ -520,11 +770,11 @@ export default class BookingController {
       );
 
       if (newStatus === bookingStatus.PENDING) {
-        const message = `Your booking has been reviewed by Kale Admin. Please check your booking details for more information and to approve the booking.`;
+        const message = `Your booking has been reviewed by ZCar Admin. Please check your booking details for more information and to approve the booking.`;
         await sendEmail(message, 'Booking Review', booking.user.email);
       }
       if (newStatus === bookingStatus.CANCELLED) {
-        const message = `Your booking has been approved by Kale Admin. Please check your booking details for more information.`;
+        const message = `Your booking has been approved by ZCar Admin. Please check your booking details for more information.`;
         await sendEmail(message, 'Booking Review', booking.user.email);
       }
 
@@ -755,7 +1005,7 @@ export default class BookingController {
         sendEmail(
           message,
           'Booking Review Status',
-          process.env.KALE_ADMIN_EMAIL,
+          process.env.ZCAR_ADMIN_EMAIL,
         );
       }
       if (newStatus === bookingStatus.DECLINED) {
@@ -767,7 +1017,7 @@ export default class BookingController {
         sendEmail(
           message,
           'Booking Review Status',
-          process.env.KALE_ADMIN_EMAIL,
+          process.env.ZCAR_ADMIN_EMAIL,
         );
       }
       if (newStatus === bookingStatus.CANCELLED) {
@@ -779,7 +1029,7 @@ export default class BookingController {
         sendEmail(
           message,
           'Booking Review Status',
-          process.env.KALE_ADMIN_EMAIL,
+          process.env.ZCAR_ADMIN_EMAIL,
         );
       }
 
