@@ -1,13 +1,14 @@
 import { Schema } from 'mongoose'
 import { v4 as uuidv4 } from 'uuid'
 import { registerModel } from '../index'
+import { required } from 'joi'
 
 const CarModelSchema = new Schema(
   {
     _id: { type: String, default: uuidv4 },
     name: { type: String, required: true },
     year: { type: Number, required: true },
-    photo: { type: String },
+    photo: { type: String, required: true },
     typeId: { type: String, ref: 'CarType', required: true },
     carMakeId: { type: String, ref: 'CarMake', required: true },
     createdBy: { type: String, ref: 'User', required: true },

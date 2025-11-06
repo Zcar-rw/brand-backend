@@ -40,10 +40,10 @@ export default (sequelize, DataTypes) => {
       status: {
         type: DataTypes.ENUM(
           'created', // company
-          'pending', // Kale
+          'pending', // ZCar
           'approved', // company
           'declined', // company
-          'cancelled', // company or Kale
+          'cancelled', // company or ZCar
           'completed', // Invoice sent
         ),
         defaultValue: 'created',

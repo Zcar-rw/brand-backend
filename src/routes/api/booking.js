@@ -25,6 +25,13 @@ router.post(
   // bookingValidations.bookingCreation,
   asyncHandler(BookingController.createBookingDetail),
 );
+router.post(
+  '/create/by-plate',
+  verifyToken,
+  isAdmin,
+  bookingValidations.bookingCreationByPlate,
+  asyncHandler(BookingController.createBookingByPlate),
+);
 router.get('/', verifyToken, asyncHandler(BookingController.getBookings));
 router.get('/:id', asyncHandler(BookingController.getBooking));
 router.get(

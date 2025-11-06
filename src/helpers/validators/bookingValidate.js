@@ -26,6 +26,26 @@ const schema = {
       .pattern(/^([01]\d|2[0-3]):([0-5]\d)$/)
       .required(),
   }),
+  onBookingCreateByPlate: Joi.object({
+    carId: Joi.string().uuid().required(),
+    clientUserId: Joi.string().uuid().required(),
+    // Support single day, array of days, or start-end range
+    date: Joi.date(),
+    dates: Joi.array().items(Joi.date()).min(1),
+    startDate: Joi.date(),
+    endDate: Joi.date(),
+    pickupLocation: Joi.string().required(),
+    dropoffLocation: Joi.string().required(),
+    pickupTime: Joi.string()
+      .pattern(/^([01]\d|2[0-3]):([0-5]\d)$/)
+      .required(),
+    dropoffTime: Joi.string()
+      .pattern(/^([01]\d|2[0-3]):([0-5]\d)$/)
+      .required(),
+  })
+    .or('date', 'dates', 'startDate')
+    .with('startDate', 'endDate')
+    .with('endDate', 'startDate'),
   onBookingInfoCreate: Joi.object({
     service: Joi.string()
       .valid(...Object.values(ServiceEnum))
@@ -58,6 +78,39 @@ const bookingValidations = {
     if (error) {
       return res.status(400).json({
         error: error.details[0].message.replace(/["'`]+/g, ''),
+      });
+    }
+    return next();
+  },
+
+  bookingCreationByPlate(req, res, next) {
+    const { error } = schema.onBookingCreateByPlate.validate({
+      carId: req.body.carId,
+      clientUserId: req.body.clientUserId,
+      date: req.body.date,
+      dates: req.body.dates,
+      startDate: req.body.startDate,
+      endDate: req.body.endDate,
+      pickupLocation: req.body.pickupLocation,
+      dropoffLocation: req.body.dropoffLocation,
+      pickupTime: req.body.pickupTime,
+      dropoffTime: req.body.dropoffTime,
+    });
+    if (error) {
+      return res.status(400).json({
+        error: error.details?.[0]?.message?.replace(/["'`]+/g, '') || 'Invalid booking data',
+      });
+    }
+    // Validate booking info section as well
+    const infoValidation = schema.onBookingInfoCreate.validate({
+      service: req.body.service,
+      comment: req.body.comment,
+    });
+    if (infoValidation.error) {
+      return res.status(400).json({
+        error:
+          infoValidation.error.details?.[0]?.message?.replace(/["'`]+/g, '') ||
+          'Invalid booking info',
       });
     }
     return next();

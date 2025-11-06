@@ -14,7 +14,7 @@ export default async (message, subject, email, notification = {}) => {
       {
         From: {
           Email: MAILJET_EMAIL_SENDER,
-          Name: 'Kale',
+          Name: 'ZCar',
         },
         To: [
           {
@@ -25,7 +25,7 @@ export default async (message, subject, email, notification = {}) => {
         Subject: subject,
         TextPart: subject,
         HTMLPart: template(message),
-        CustomID: 'KaleMail',
+        CustomID: 'ZCarMail',
       },
     ],
   });

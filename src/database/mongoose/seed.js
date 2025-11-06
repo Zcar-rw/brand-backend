@@ -15,8 +15,8 @@ async function seed() {
   const roles = [
     { name: 'admin', label: 'Admin', type: 'internal' },
     { name: 'cooperate-owner', label: 'Company Owner', type: 'cooperate' },
-    { name: 'driver', label: 'Driver', type: 'client' },
-    { name: 'user', label: 'User', type: 'client' },
+    { name: 'driver', label: 'Driver', type: 'driver' },
+    { name: 'client', label: 'Client', type: 'client' },
     { name: 'car-owner', label: 'Car Owner', type: 'owner' },
   ];
   for (const role of roles) {
