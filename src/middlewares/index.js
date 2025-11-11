@@ -6,6 +6,7 @@ import loginAdmin from './loginAdmin';
 import loginUser from './loginUser';
 import isInactiveEmail from './isInactiveEmail';
 import getCarIdBySlug from './getCarIdBySlug';
+import getCarById from './getCarById';
 import isDriver from './isDriver';
 import allowAny from './allowAny';
 
@@ -17,6 +18,7 @@ export {
   loginUser,
   isInactiveEmail,
   getCarIdBySlug,
+  getCarById,
   isDriver,
   allowAny,
 };

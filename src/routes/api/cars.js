@@ -1,7 +1,7 @@
 import express from 'express';
 import CarsController from '../../controllers/CarsController';
 import asyncHandler from '../../middlewares/asyncHandler';
-import { verifyToken, isAdmin, getCarIdBySlug } from '../../middlewares';
+import { verifyToken, isAdmin, getCarIdBySlug, getCarById } from '../../middlewares';
 import carValidations from '../../helpers/validators/carValidate';
 
 const router = express.Router();
@@ -21,8 +21,8 @@ router.get(
   asyncHandler(CarsController.getAdminOneCar),
 );
 router.get(
-  '/view/public/:slug',
-  getCarIdBySlug,
+  '/view/public/:carId',
+  getCarById,
   asyncHandler(CarsController.getOneCar),
 );
 router.patch(
@@ -39,7 +39,7 @@ router.get(
 );
 router.get(
   '/public',
-  verifyToken,
+  // verifyToken,
   asyncHandler(CarsController.getPublicCars),
 );
 router.get(
