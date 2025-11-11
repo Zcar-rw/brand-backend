@@ -295,7 +295,9 @@ export default class CarsController {
   }
 
   static async getOneCar(req, res) {
-    return req.car && req.car.status === 'Available'
+    const statusValue = (req.car?.status || '').toString().toLowerCase();
+    const isPubliclyVisible = statusValue === 'active' || statusValue === 'available';
+    return req.car && isPubliclyVisible
       ? res.status(status.OK).json({
           response: req.car,
         })
