@@ -41,6 +41,11 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         allowNull: true,
       },
+      mileage: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        comment: 'Current mileage in kilometers',
+      },
       status: {
         type: DataTypes.ENUM(['active', 'inactive']),
         allowNull: false,
