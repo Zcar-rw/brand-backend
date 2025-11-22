@@ -41,7 +41,9 @@ export default class CarsController {
       }
 
       // 2. Check if plate number already exists (Mongo-safe)
-      const existingCar = await FindOne('Car', { plateNumber: data.plateNumber });
+      const existingCar = await FindOne('Car', {
+        plateNumber: data.plateNumber,
+      });
       if (existingCar && existingCar.id) {
         return res.status(status.CONFLICT).json({
           error: 'A car with this plate number already exists',
@@ -98,9 +100,21 @@ export default class CarsController {
 
     const { id } = req.params;
     const include = [
-      { model: db.CarMake, as: 'carMake', attributes: { exclude: ['createdAt', 'updatedAt'] } },
-      { model: db.CarType, as: 'carType', attributes: { exclude: ['createdAt', 'updatedAt'] } },
-      { model: db.Supplier, as: 'supplier', attributes: { exclude: ['createdAt', 'updatedAt'] } },
+      {
+        model: db.CarMake,
+        as: 'carMake',
+        attributes: { exclude: ['createdAt', 'updatedAt'] },
+      },
+      {
+        model: db.CarType,
+        as: 'carType',
+        attributes: { exclude: ['createdAt', 'updatedAt'] },
+      },
+      {
+        model: db.Supplier,
+        as: 'supplier',
+        attributes: { exclude: ['createdAt', 'updatedAt'] },
+      },
     ];
     const condition = { ownerId: id };
     const { response, meta } = await FindAndCount(
@@ -154,11 +168,11 @@ export default class CarsController {
           as: 'carMake',
           attributes: { exclude: ['createdAt', 'updatedAt'] },
         },
-        {
-          model: db.CarMeta,
-          as: 'carMeta',
-          attributes: { exclude: ['createdAt', 'updatedAt'] },
-        },
+        // {
+        //   model: db.CarMeta,
+        //   as: 'carMeta',
+        //   attributes: { exclude: ['createdAt', 'updatedAt'] },
+        // },
         {
           model: db.User,
           as: 'user',
@@ -215,7 +229,9 @@ export default class CarsController {
         {
           model: db.Supplier,
           as: 'supplier',
-          attributes: { exclude: ['createdAt', 'updatedAt', 'createdBy', 'tin'] },
+          attributes: {
+            exclude: ['createdAt', 'updatedAt', 'createdBy', 'tin'],
+          },
         },
       ];
 
@@ -238,11 +254,7 @@ export default class CarsController {
         });
       }
       return res.status(status.OK).json({
-        meta: helper.generator.meta(
-          meta.count,
-          limit,
-          parseInt(page, 10) || 1,
-        ),
+        meta: helper.generator.meta(meta.count, limit, parseInt(page, 10) || 1),
         response,
       });
     } catch (error) {
@@ -267,11 +279,11 @@ export default class CarsController {
         as: 'carMake',
         attributes: { exclude: ['createdAt', 'updatedAt'] },
       },
-      {
-        model: db.CarMeta,
-        as: 'carMeta',
-        attributes: { exclude: ['createdAt', 'updatedAt'] },
-      },
+      // {
+      //   model: db.CarMeta,
+      //   as: 'carMeta',
+      //   attributes: { exclude: ['createdAt', 'updatedAt'] },
+      // },
       {
         model: db.RentingInformation,
         as: 'RentingInformation',
@@ -298,7 +310,8 @@ export default class CarsController {
 
   static async getOneCar(req, res) {
     const statusValue = (req.car?.status || '').toString().toLowerCase();
-    const isPubliclyVisible = statusValue === 'active' || statusValue === 'available';
+    const isPubliclyVisible =
+      statusValue === 'active' || statusValue === 'available';
     return req.car && isPubliclyVisible
       ? res.status(status.OK).json({
           response: req.car,
@@ -349,11 +362,11 @@ export default class CarsController {
           as: 'carMake',
           attributes: { exclude: ['createdAt', 'updatedAt'] },
         },
-        {
-          model: db.CarMeta,
-          as: 'carMeta',
-          attributes: { exclude: ['createdAt', 'updatedAt'] },
-        },
+        // {
+        //   model: db.CarMeta,
+        //   as: 'carMeta',
+        //   attributes: { exclude: ['createdAt', 'updatedAt'] },
+        // },
       ];
       const condition = {
         userId,

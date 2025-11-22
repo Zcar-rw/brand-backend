@@ -24,10 +24,10 @@ export default class CarServices {
       userId,
     };
     const include = [
-      {
-        model: db.CarMeta,
-        as: 'carMeta',
-      },
+      // {
+      //   model: db.CarMeta,
+      //   as: 'carMeta',
+      // },
       {
         model: db.CarMake,
         as: 'carMake',
