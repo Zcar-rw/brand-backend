@@ -40,16 +40,14 @@ export default class BookingController {
         { id: carId },
         [
           {
-            model: db.CarModel,
-            as: 'carModel',
+            model: db.CarMake,
+            as: 'carMake',
             attributes: { exclude: ['createdAt', 'updatedAt'] },
-            include: [
-              {
-                model: db.CarType,
-                as: 'carType',
-                attributes: { exclude: ['createdAt', 'updatedAt'] },
-              },
-            ],
+          },
+          {
+            model: db.CarType,
+            as: 'carType',
+            attributes: { exclude: ['createdAt', 'updatedAt'] },
           },
           {
             model: db.User,
@@ -64,10 +62,10 @@ export default class BookingController {
           message: 'Car not found',
         });
       }
-      if (!car?.carModel?.typeId) {
+      if (!car?.carTypeId) {
         return res.status(status.BAD_REQUEST).json({
           status: 'error',
-          message: 'Car model/type association missing for selected car',
+          message: 'Car type association missing for selected car',
         });
       }
 
@@ -118,9 +116,7 @@ export default class BookingController {
       const baseDaily = Number(
         car?.amount !== undefined && car?.amount !== null
           ? car.amount
-          : car?.baseAmount !== undefined && car?.baseAmount !== null
-            ? car.baseAmount
-            : 0,
+          : 0,
       );
       // Discount tiers
       let discount = 0; // 0% for 1 day
@@ -149,11 +145,11 @@ export default class BookingController {
         });
       }
 
-      // Create booking details per day with derived carType from car's model
+      // Create booking details per day with derived carType from car
       for (const d of datesToCreate) {
         await Create('BookingDetail', {
           bookingId: booking.id,
-          carType: car.carModel.typeId,
+          carType: car.carTypeId,
           date: moment(d).startOf('day').toDate(),
           pickupLocation,
           dropoffLocation,
@@ -170,9 +166,9 @@ export default class BookingController {
         car: {
           id: car.id,
           plateNumber: car.plateNumber,
-          model: car.carModel?.name,
-          type: car.carModel?.carType?.name,
-          photo: car.carModel?.photo,
+          make: car.carMake?.name,
+          type: car.carType?.name,
+          photo: car.photo,
           owner: car.owner ? {
             id: car.owner.id,
             name: `${car.owner.firstName} ${car.owner.lastName}`,
@@ -460,21 +456,14 @@ export default class BookingController {
               attributes: ['id', 'firstName', 'lastName', 'email'],
             },
             {
-              model: db.CarModel,
-              as: 'carModel',
+              model: db.CarMake,
+              as: 'carMake',
               attributes: { exclude: ['createdAt', 'updatedAt'] },
-              include: [
-                {
-                  model: db.CarType,
-                  as: 'carType',
-                  attributes: { exclude: ['createdAt', 'updatedAt'] },
-                },
-                {
-                  model: db.CarMake,
-                  as: 'carMake',
-                  attributes: { exclude: ['createdAt', 'updatedAt'] },
-                },
-              ],
+            },
+            {
+              model: db.CarType,
+              as: 'carType',
+              attributes: { exclude: ['createdAt', 'updatedAt'] },
             },
           ],
         },
@@ -591,21 +580,14 @@ export default class BookingController {
               attributes: ['id', 'firstName', 'lastName', 'email'],
             },
             {
-              model: db.CarModel,
-              as: 'carModel',
+              model: db.CarMake,
+              as: 'carMake',
               attributes: { exclude: ['createdAt', 'updatedAt'] },
-              include: [
-                {
-                  model: db.CarType,
-                  as: 'carType',
-                  attributes: { exclude: ['createdAt', 'updatedAt'] },
-                },
-                {
-                  model: db.CarMake,
-                  as: 'carMake',
-                  attributes: { exclude: ['createdAt', 'updatedAt'] },
-                },
-              ],
+            },
+            {
+              model: db.CarType,
+              as: 'carType',
+              attributes: { exclude: ['createdAt', 'updatedAt'] },
             },
           ],
         },

@@ -151,12 +151,12 @@ export default class OwnerController {
     try {
       const include = [
         {
-          model: { modelName: 'CarModel' },
-          as: 'carModel',
-          include: [
-            { model: { modelName: 'CarType' }, as: 'carType' },
-            { model: { modelName: 'CarMake' }, as: 'carMake' },
-          ],
+          model: { modelName: 'CarMake' },
+          as: 'carMake',
+        },
+        {
+          model: { modelName: 'CarType' },
+          as: 'carType',
         },
         { model: { modelName: 'Supplier' }, as: 'supplier' },
       ];
@@ -188,12 +188,12 @@ export default class OwnerController {
           as: 'car',
           include: [
             {
-              model: { modelName: 'CarModel' },
-              as: 'carModel',
-              include: [
-                { model: { modelName: 'CarType' }, as: 'carType' },
-                { model: { modelName: 'CarMake' }, as: 'carMake' },
-              ],
+              model: { modelName: 'CarMake' },
+              as: 'carMake',
+            },
+            {
+              model: { modelName: 'CarType' },
+              as: 'carType',
             },
             { model: { modelName: 'User' }, as: 'owner' },
           ],
@@ -210,7 +210,6 @@ export default class OwnerController {
         { model: { modelName: 'BookingDetail' }, as: 'bookingDetails' },
       ];
       const { response: bookings } = await FindAll('Booking', { carId: { $in: carIds } }, include);
-      console.log({ bookings });
       return res.status(status.OK).json({ response: bookings });
 
   // 3) Previous schedule-based mapping is no longer needed

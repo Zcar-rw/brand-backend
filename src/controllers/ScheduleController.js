@@ -99,16 +99,9 @@ export default class ScheduleController {
 
       const car = await FindOne('Car', { id: carId }, [
         {
-          model: db.CarModel,
-          as: 'carModel',
+          model: db.CarType,
+          as: 'carType',
           attributes: { exclude: ['createdAt', 'updatedAt'] },
-          include: [
-            {
-              model: db.CarType,
-              as: 'carType',
-              attributes: { exclude: ['createdAt', 'updatedAt'] },
-            },
-          ],
         },
       ]);
       if (!car || Object.keys(car).length === 0) {
@@ -117,7 +110,7 @@ export default class ScheduleController {
           message: 'Car not found',
         });
       }
-      if (bookingDetail?.carType !== car?.carModel?.typeId) {
+      if (bookingDetail?.carType !== car?.carTypeId) {
         return res.status(status.BAD_REQUEST).json({
           status: 'error',
           message: "The selected car's type does not match the client's choice",
@@ -348,16 +341,14 @@ export default class ScheduleController {
           attributes: { exclude: ['createdAt', 'updatedAt'] },
           include: [
             {
-              model: db.CarModel,
-              as: 'carModel',
+              model: db.CarMake,
+              as: 'carMake',
               attributes: { exclude: ['createdAt', 'updatedAt'] },
-              include: [
-                {
-                  model: db.CarType,
-                  as: 'carType',
-                  attributes: { exclude: ['createdAt', 'updatedAt'] },
-                },
-              ],
+            },
+            {
+              model: db.CarType,
+              as: 'carType',
+              attributes: { exclude: ['createdAt', 'updatedAt'] },
             },
           ],
         },
@@ -434,16 +425,14 @@ export default class ScheduleController {
           attributes: { exclude: ['createdAt', 'updatedAt'] },
           include: [
             {
-              model: db.CarModel,
-              as: 'carModel',
+              model: db.CarMake,
+              as: 'carMake',
               attributes: { exclude: ['createdAt', 'updatedAt'] },
-              include: [
-                {
-                  model: db.CarType,
-                  as: 'carType',
-                  attributes: { exclude: ['createdAt', 'updatedAt'] },
-                },
-              ],
+            },
+            {
+              model: db.CarType,
+              as: 'carType',
+              attributes: { exclude: ['createdAt', 'updatedAt'] },
             },
           ],
         },
