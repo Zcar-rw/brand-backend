@@ -21,10 +21,18 @@ export default class CarsController {
       status: req.body.status || 'active',
       createdBy: req.user?.id || req.body.userId,
       plateNumber: req.body.plateNumber.toUpperCase(),
+      mileage: req.body.mileage || 0,
     };
 
     try {
-      // 1. Validate plate number format (Rwandan format: RXX###X)
+      // 1. Validate owner is provided
+      if (!data.ownerId) {
+        return res.status(status.BAD_REQUEST).json({
+          error: 'Owner is required when creating a car',
+        });
+      }
+
+      // 2. Validate plate number format (Rwandan format: RXX###X)
       const plateRegex = /^R[A-Z]{2}\d{3}[A-Z]$/;
       if (!plateRegex.test(data.plateNumber)) {
         return res.status(status.BAD_REQUEST).json({
@@ -33,7 +41,9 @@ export default class CarsController {
       }
 
       // 2. Check if plate number already exists (Mongo-safe)
-      const existingCar = await FindOne('Car', { plateNumber: data.plateNumber });
+      const existingCar = await FindOne('Car', {
+        plateNumber: data.plateNumber,
+      });
       if (existingCar && existingCar.id) {
         return res.status(status.CONFLICT).json({
           error: 'A car with this plate number already exists',
@@ -43,13 +53,13 @@ export default class CarsController {
       // 3. Create the car
       const response = await Create('Car', data);
 
-      // 4. Create default discount tiers if baseAmount is provided
-      if (response && response.id && data.baseAmount) {
+      // 4. Create default discount tiers if amount is provided
+      if (response && response.id && data.amount) {
         const discountTiers = [
-          { minDays: 1, maxDays: 1, discountPercent: 0 },
-          { minDays: 2, maxDays: 7, discountPercent: 20 },
-          { minDays: 8, maxDays: 14, discountPercent: 30 },
-          { minDays: 15, maxDays: null, discountPercent: 40 },
+          { minDays: 1, maxDays: 2, discountPercent: 0 },
+          { minDays: 3, maxDays: 7, discountPercent: 20 },
+          { minDays: 8, maxDays: 15, discountPercent: 30 },
+          { minDays: 16, maxDays: null, discountPercent: 40 },
         ];
 
         for (const tier of discountTiers) {
@@ -91,15 +101,20 @@ export default class CarsController {
     const { id } = req.params;
     const include = [
       {
-        model: db.CarModel,
-        as: 'carModel',
+        model: db.CarMake,
+        as: 'carMake',
         attributes: { exclude: ['createdAt', 'updatedAt'] },
-        include: [
-          { model: db.CarMake, as: 'carMake', attributes: { exclude: ['createdAt', 'updatedAt'] } },
-          { model: db.CarType, as: 'carType', attributes: { exclude: ['createdAt', 'updatedAt'] } },
-        ],
       },
-      { model: db.Supplier, as: 'supplier', attributes: { exclude: ['createdAt', 'updatedAt'] } },
+      {
+        model: db.CarType,
+        as: 'carType',
+        attributes: { exclude: ['createdAt', 'updatedAt'] },
+      },
+      {
+        model: db.Supplier,
+        as: 'supplier',
+        attributes: { exclude: ['createdAt', 'updatedAt'] },
+      },
     ];
     const condition = { ownerId: id };
     const { response, meta } = await FindAndCount(
@@ -153,11 +168,11 @@ export default class CarsController {
           as: 'carMake',
           attributes: { exclude: ['createdAt', 'updatedAt'] },
         },
-        {
-          model: db.CarMeta,
-          as: 'carMeta',
-          attributes: { exclude: ['createdAt', 'updatedAt'] },
-        },
+        // {
+        //   model: db.CarMeta,
+        //   as: 'carMeta',
+        //   attributes: { exclude: ['createdAt', 'updatedAt'] },
+        // },
         {
           model: db.User,
           as: 'user',
@@ -202,18 +217,21 @@ export default class CarsController {
 
       const include = [
         {
-          model: db.CarModel,
-          as: 'carModel',
+          model: db.CarMake,
+          as: 'carMake',
           attributes: { exclude: ['createdAt', 'updatedAt'] },
-          include: [
-            { model: db.CarMake, as: 'carMake', attributes: { exclude: ['createdAt', 'updatedAt'] } },
-            { model: db.CarType, as: 'carType', attributes: { exclude: ['createdAt', 'updatedAt'] } },
-          ],
+        },
+        {
+          model: db.CarType,
+          as: 'carType',
+          attributes: { exclude: ['createdAt', 'updatedAt'] },
         },
         {
           model: db.Supplier,
           as: 'supplier',
-          attributes: { exclude: ['createdAt', 'updatedAt', 'createdBy', 'tin'] },
+          attributes: {
+            exclude: ['createdAt', 'updatedAt', 'createdBy', 'tin'],
+          },
         },
       ];
 
@@ -236,11 +254,7 @@ export default class CarsController {
         });
       }
       return res.status(status.OK).json({
-        meta: helper.generator.meta(
-          meta.count,
-          limit,
-          parseInt(page, 10) || 1,
-        ),
+        meta: helper.generator.meta(meta.count, limit, parseInt(page, 10) || 1),
         response,
       });
     } catch (error) {
@@ -265,11 +279,11 @@ export default class CarsController {
         as: 'carMake',
         attributes: { exclude: ['createdAt', 'updatedAt'] },
       },
-      {
-        model: db.CarMeta,
-        as: 'carMeta',
-        attributes: { exclude: ['createdAt', 'updatedAt'] },
-      },
+      // {
+      //   model: db.CarMeta,
+      //   as: 'carMeta',
+      //   attributes: { exclude: ['createdAt', 'updatedAt'] },
+      // },
       {
         model: db.RentingInformation,
         as: 'RentingInformation',
@@ -296,7 +310,8 @@ export default class CarsController {
 
   static async getOneCar(req, res) {
     const statusValue = (req.car?.status || '').toString().toLowerCase();
-    const isPubliclyVisible = statusValue === 'active' || statusValue === 'available';
+    const isPubliclyVisible =
+      statusValue === 'active' || statusValue === 'available';
     return req.car && isPubliclyVisible
       ? res.status(status.OK).json({
           response: req.car,
@@ -347,11 +362,11 @@ export default class CarsController {
           as: 'carMake',
           attributes: { exclude: ['createdAt', 'updatedAt'] },
         },
-        {
-          model: db.CarMeta,
-          as: 'carMeta',
-          attributes: { exclude: ['createdAt', 'updatedAt'] },
-        },
+        // {
+        //   model: db.CarMeta,
+        //   as: 'carMeta',
+        //   attributes: { exclude: ['createdAt', 'updatedAt'] },
+        // },
       ];
       const condition = {
         userId,
@@ -378,21 +393,14 @@ export default class CarsController {
 
       const include = [
         {
-          model: db.CarModel,
-          as: 'carModel',
+          model: db.CarMake,
+          as: 'carMake',
           attributes: { exclude: ['createdAt', 'updatedAt'] },
-          include: [
-            {
-              model: db.CarMake,
-              as: 'carMake',
-              attributes: { exclude: ['createdAt', 'updatedAt'] },
-            },
-            {
-              model: db.CarType,
-              as: 'carType',
-              attributes: { exclude: ['createdAt', 'updatedAt'] },
-            },
-          ],
+        },
+        {
+          model: db.CarType,
+          as: 'carType',
+          attributes: { exclude: ['createdAt', 'updatedAt'] },
         },
         {
           model: db.Supplier,
@@ -451,12 +459,12 @@ export default class CarsController {
         });
       }
 
-      // 2. Check if car is already assigned to an owner
-      if (car.ownerId) {
-        return res.status(status.CONFLICT).json({
-          error: 'This car is already assigned to another owner',
-        });
-      }
+      // // 2. Check if car is already assigned to an owner
+      // if (car.ownerId) {
+      //   return res.status(status.CONFLICT).json({
+      //     error: 'This car is already assigned to another owner',
+      //   });
+      // }
 
       // 3. Check if owner exists (User with given id)
       const owner = await FindOne('User', { _id: ownerId });
@@ -551,21 +559,14 @@ export default class CarsController {
 
       const include = [
         {
-          model: db.CarModel,
-          as: 'carModel',
+          model: db.CarMake,
+          as: 'carMake',
           attributes: { exclude: ['createdAt', 'updatedAt'] },
-          include: [
-            {
-              model: db.CarMake,
-              as: 'carMake',
-              attributes: { exclude: ['createdAt', 'updatedAt'] },
-            },
-            {
-              model: db.CarType,
-              as: 'carType',
-              attributes: { exclude: ['createdAt', 'updatedAt'] },
-            },
-          ],
+        },
+        {
+          model: db.CarType,
+          as: 'carType',
+          attributes: { exclude: ['createdAt', 'updatedAt'] },
         },
         {
           model: db.Supplier,

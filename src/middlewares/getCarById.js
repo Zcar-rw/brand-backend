@@ -8,15 +8,9 @@ export default async (req, res, next) => {
 
     // Include relations similar to public list and details needs
     const include = [
-      {
-        model: db.CarModel,
-        as: 'carModel',
-        attributes: { exclude: ['createdAt', 'updatedAt'] },
-        include: [
-          { model: db.CarMake, as: 'carMake', attributes: { exclude: ['createdAt', 'updatedAt'] } },
-          { model: db.CarType, as: 'carType', attributes: { exclude: ['createdAt', 'updatedAt'] } },
-        ],
-      },
+      // Direct make & type population now that carModel is deprecated
+      { model: db.CarMake, as: 'carMake', attributes: { exclude: ['createdAt', 'updatedAt'] } },
+      { model: db.CarType, as: 'carType', attributes: { exclude: ['createdAt', 'updatedAt'] } },
       { model: db.Supplier, as: 'supplier', attributes: { exclude: ['createdAt', 'updatedAt', 'createdBy', 'tin'] } },
     ];
 

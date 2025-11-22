@@ -6,11 +6,13 @@ const CarSchema = new Schema(
   {
     _id: { type: String, default: uuidv4 },
     plateNumber: { type: String, required: true, unique: true },
-    ownerId: { type: String, ref: 'User' },
+    ownerId: { type: String, ref: 'User', required: true },
     supplierId: { type: String, ref: 'Supplier' },
-    modelId: { type: String, ref: 'CarModel', required: true },
+    carMakeId: { type: String, ref: 'CarMake' },
+    carTypeId: { type: String, ref: 'CarType' },
     amount: { type: Number },
-    baseAmount: { type: Number },
+    mileage: { type: Number, default: 0 },
+    photo: { type: String },
     status: { type: String, enum: ['active', 'inactive'], default: 'active' },
     createdBy: { type: String, ref: 'User', required: true },
   },
@@ -39,9 +41,15 @@ CarSchema.virtual('owner', {
   foreignField: '_id',
   justOne: true,
 });
-CarSchema.virtual('carModel', {
-  ref: 'CarModel',
-  localField: 'modelId',
+CarSchema.virtual('carMake', {
+  ref: 'CarMake',
+  localField: 'carMakeId',
+  foreignField: '_id',
+  justOne: true,
+});
+CarSchema.virtual('carType', {
+  ref: 'CarType',
+  localField: 'carTypeId',
   foreignField: '_id',
   justOne: true,
 });
